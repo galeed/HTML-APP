@@ -14,10 +14,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
 
-  <!-- JS Beautify (Auto-formateador de HTML/CSS/JS) -->
+  <!-- JS Beautify -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-html.min.js"></script>
+
+  <!-- html2pdf.js (Exportación PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root {
@@ -114,15 +117,8 @@
       transition: all 0.3s ease;
     }
 
-    .status-tag.saving {
-      border-color: var(--neon-cyan);
-      color: var(--neon-cyan);
-    }
-
-    .status-tag.formatted {
-      border-color: var(--neon-yellow);
-      color: var(--neon-yellow);
-    }
+    .status-tag.saving { border-color: var(--neon-cyan); color: var(--neon-cyan); }
+    .status-tag.formatted { border-color: var(--neon-yellow); color: var(--neon-yellow); }
 
     /* Pestañas para Móvil */
     .tabs {
@@ -173,11 +169,9 @@
       flex-direction: column;
     }
 
-    .panel.active {
-      display: flex;
-    }
+    .panel.active { display: flex; }
 
-    /* Estilos e Integración de CodeMirror */
+    /* CodeMirror */
     .editor-container {
       position: relative;
       flex: 1;
@@ -241,7 +235,7 @@
       background: #ffffff;
     }
 
-    /* Botones de Acción */
+    /* Botones de Acción y Menú Desplegable de Descargas */
     .action-bar {
       padding: 12px 16px;
       background: var(--bg-panel);
@@ -249,6 +243,7 @@
       display: flex;
       gap: 10px;
       z-index: 10;
+      position: relative;
     }
 
     .btn {
@@ -286,8 +281,88 @@
       color: var(--neon-magenta);
     }
 
-    .btn:active {
-      transform: scale(0.98);
+    .dropdown-container {
+      position: relative;
+      flex: 1;
+      display: flex;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      bottom: 115%;
+      right: 0;
+      left: 0;
+      background: #0d121d;
+      border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.25);
+      border-radius: 4px;
+      overflow: hidden;
+      flex-direction: column;
+      z-index: 20;
+    }
+
+    .dropdown-menu.show { display: flex; }
+
+    .dropdown-item {
+      padding: 12px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: var(--text-main);
+      font-family: var(--font-code);
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.2s;
+    }
+
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover, .dropdown-item:active {
+      background: rgba(0, 243, 255, 0.15);
+      color: var(--neon-cyan);
+    }
+
+    /* Plantilla oculta para renderizar PDF estilo Hacker/IDE */
+    #pdf-template {
+      display: none;
+      background: #0d1117;
+      color: #00ffcc;
+      font-family: 'Courier New', Courier, monospace;
+      padding: 24px;
+      width: 700px;
+    }
+
+    #pdf-template .pdf-header {
+      border-bottom: 2px solid #00f3ff;
+      padding-bottom: 10px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      color: #8b949e;
+      font-size: 12px;
+    }
+
+    #pdf-template .pdf-title {
+      color: #00f3ff;
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    #pdf-template pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 11px;
+      line-height: 1.4;
+      background: #05070a;
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #1f242d;
+      color: #a5d6ff;
     }
 
     /* Layout Escritorio */
@@ -313,12 +388,8 @@
 
   <!-- Control de Pestañas Móviles -->
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('editor')">
-      &lt;/&gt; CÓDIGO
-    </button>
-    <button class="tab-btn" onclick="switchTab('preview')">
-      &#128065; VISTA PREVIA
-    </button>
+    <button class="tab-btn active" onclick="switchTab('editor')">&lt;/&gt; CÓDIGO</button>
+    <button class="tab-btn" onclick="switchTab('preview')">&#128065; VISTA PREVIA</button>
   </div>
 
   <!-- Workspace -->
@@ -348,15 +419,35 @@
 
   <!-- Barra de Acciones -->
   <div class="action-bar">
-    <button class="btn btn-secondary" onclick="clearCode()">
-      &#128465; LIMPIAR
-    </button>
-    <button class="btn btn-format" onclick="formatCode()">
-      ⚡ FORMATEAR
-    </button>
-    <button class="btn btn-primary" onclick="downloadFile()">
-      &#128190; DESCARGAR .HTML
-    </button>
+    <button class="btn btn-secondary" onclick="clearCode()">&#128465; LIMPIAR</button>
+    <button class="btn btn-format" onclick="formatCode()">⚡ FORMATEAR</button>
+    
+    <!-- Menú Desplegable de Descarga -->
+    <div class="dropdown-container">
+      <button class="btn btn-primary" onclick="toggleDownloadMenu()">
+        &#128190; DESCARGAR &#9662;
+      </button>
+      <div id="download-menu" class="dropdown-menu">
+        <button class="dropdown-item" onclick="downloadAs('html')">
+          <span>Archivo Web</span> <strong>.HTML</strong>
+        </button>
+        <button class="dropdown-item" onclick="downloadAs('txt')">
+          <span>Texto Plano</span> <strong>.TXT</strong>
+        </button>
+        <button class="dropdown-item" onclick="downloadAs('pdf')">
+          <span>Documento Hacker</span> <strong>.PDF</strong>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Elemento temporal para generación de PDF cibernético -->
+  <div id="pdf-template">
+    <div class="pdf-header">
+      <span class="pdf-title">HTML APP // CODE_EXPORT.SYS</span>
+      <span id="pdf-date"></span>
+    </div>
+    <pre id="pdf-code-content"></pre>
   </div>
 
   <script>
@@ -364,7 +455,6 @@
     const statusTag = document.getElementById('status-tag');
     const STORAGE_KEY = 'html_app_code_save';
 
-    // Plantilla inicial por defecto
     const initialTemplate = `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -392,15 +482,13 @@
 <body>
   <div class="card">
     <h1>¡HTML APP Cyber-Core!</h1>
-    <p>Autoguardado, sintaxis y auto-formateado activo.</p>
+    <p>Exportación a HTML, TXT y PDF disponible.</p>
   </div>
 </body>
 </html>`;
 
-    // Cargar código desde localStorage o usar plantilla
     const savedCode = localStorage.getItem(STORAGE_KEY) || initialTemplate;
 
-    // Inicializar CodeMirror
     const editor = CodeMirror.fromTextArea(document.getElementById('code-input'), {
       mode: 'htmlmixed',
       theme: 'abbott',
@@ -412,7 +500,6 @@
     editor.setValue(savedCode);
     updatePreview();
 
-    // Event Listener con Debounce para Guardado y Vista Previa
     let saveTimeout;
     editor.on('change', () => {
       statusTag.textContent = 'GUARDANDO...';
@@ -433,7 +520,6 @@
       }, 500);
     });
 
-    // Función de Auto-Formateado e Indentación
     function formatCode() {
       const currentCode = editor.getValue();
       if (!currentCode.trim()) return;
@@ -443,26 +529,15 @@
         indent_char: " ",
         max_preserve_newlines: 1,
         preserve_newlines: true,
-        keep_array_indentation: false,
-        break_chained_methods: false,
         indent_scripts: "normal",
-        brace_style: "collapse",
-        space_before_conditional: true,
-        unescape_strings: false,
-        jslint_happy: false,
-        end_with_newline: false,
         wrap_line_length: 0,
-        indent_inner_html: true,
-        comma_first: false,
-        eoc: "\n"
+        indent_inner_html: true
       });
 
-      // Preservar la posición del scroll del editor
       const scrollInfo = editor.getScrollInfo();
       editor.setValue(formatted);
       editor.scrollTo(scrollInfo.left, scrollInfo.top);
 
-      // Notificación visual de estado
       statusTag.textContent = 'FORMATEADO';
       statusTag.className = 'status-tag formatted';
       
@@ -472,7 +547,6 @@
       }, 1500);
     }
 
-    // Actualizar Render del iframe
     function updatePreview() {
       const code = editor.getValue();
       const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
@@ -481,7 +555,6 @@
       iframeDoc.close();
     }
 
-    // Cambiar Pestañas en Vista Móvil
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
@@ -489,7 +562,7 @@
       if (tabName === 'editor') {
         document.querySelectorAll('.tab-btn')[0].classList.add('active');
         document.getElementById('panel-editor').classList.add('active');
-        editor.refresh(); // Refrescar dimensiones de CodeMirror
+        editor.refresh();
       } else {
         document.querySelectorAll('.tab-btn')[1].classList.add('active');
         document.getElementById('panel-preview').classList.add('active');
@@ -497,7 +570,6 @@
       }
     }
 
-    // Insertar Etiquetas Rápidas en la posición del cursor
     function insertTag(openTag, closeTag) {
       const doc = editor.getDoc();
       const cursor = doc.getCursor();
@@ -511,20 +583,64 @@
       editor.focus();
     }
 
-    // Descargar Archivo HTML
-    function downloadFile() {
-      const blob = new Blob([editor.getValue()], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'index.html';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    /* Menú de Descargas */
+    function toggleDownloadMenu() {
+      const menu = document.getElementById('download-menu');
+      menu.classList.toggle('show');
     }
 
-    // Limpiar Editor y Cache
+    // Cerrar menú si se hace clic fuera
+    document.addEventListener('click', (e) => {
+      const container = document.querySelector('.dropdown-container');
+      if (container && !container.contains(e.target)) {
+        document.getElementById('download-menu').classList.remove('show');
+      }
+    });
+
+    /* Lógica unificada de exportación */
+    function downloadAs(format) {
+      document.getElementById('download-menu').classList.remove('show');
+      const code = editor.getValue();
+
+      if (format === 'html' || format === 'txt') {
+        const mime = format === 'html' ? 'text/html' : 'text/plain';
+        const blob = new Blob([code], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `codigo.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } else if (format === 'pdf') {
+        statusTag.textContent = 'GENERANDO PDF...';
+        statusTag.className = 'status-tag saving';
+
+        const pdfTemplate = document.getElementById('pdf-template');
+        const codeHolder = document.getElementById('pdf-code-content');
+        const dateHolder = document.getElementById('pdf-date');
+
+        codeHolder.textContent = code;
+        dateHolder.textContent = new Date().toLocaleString('es-MX');
+        pdfTemplate.style.display = 'block';
+
+        const opt = {
+          margin:       10,
+          filename:     'codigo_fuente.pdf',
+          image:        { type: 'jpeg', quality: 0.98 },
+          html2canvas:  { scale: 2, backgroundColor: '#0d1117' },
+          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(pdfTemplate).save().then(() => {
+          pdfTemplate.style.display = 'none';
+          statusTag.textContent = 'SYS::READY';
+          statusTag.className = 'status-tag';
+        });
+      }
+    }
+
     function clearCode() {
       if (confirm('¿Deseas borrar todo el código y reiniciar el almacenamiento?')) {
         editor.setValue('');
