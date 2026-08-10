@@ -19,7 +19,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-html.min.js"></script>
 
-  <!-- html2pdf.js (Exportación PDF) -->
+  <!-- html2pdf.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
@@ -105,7 +105,7 @@
       text-shadow: 0 0 5px var(--neon-cyan);
     }
 
-    /* Indicador dinámico de estado */
+    /* Indicadores de estado */
     .status-tag {
       font-size: 0.65rem;
       padding: 3px 8px;
@@ -119,6 +119,7 @@
 
     .status-tag.saving { border-color: var(--neon-cyan); color: var(--neon-cyan); }
     .status-tag.formatted { border-color: var(--neon-yellow); color: var(--neon-yellow); }
+    .status-tag.loaded { border-color: var(--neon-green); color: var(--neon-green); }
 
     /* Pestañas para Móvil */
     .tabs {
@@ -222,6 +223,12 @@
       color: var(--neon-yellow);
     }
 
+    .quick-btn.upload {
+      background: rgba(0, 255, 102, 0.12);
+      border-color: var(--neon-green);
+      color: var(--neon-green);
+    }
+
     .quick-btn:active {
       background: var(--neon-cyan);
       color: #000;
@@ -241,25 +248,25 @@
       background: var(--bg-panel);
       border-top: 1px solid var(--border-glow);
       display: flex;
-      gap: 10px;
+      gap: 8px;
       z-index: 10;
       position: relative;
     }
 
     .btn {
       flex: 1;
-      padding: 12px 8px;
+      padding: 12px 6px;
       border: none;
       border-radius: 4px;
       font-weight: 800;
-      font-size: 0.78rem;
-      letter-spacing: 0.8px;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 4px;
       transition: all 0.2s;
     }
 
@@ -267,6 +274,12 @@
       background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
       color: #000;
       box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    }
+
+    .btn-load {
+      background: rgba(0, 255, 102, 0.1);
+      border: 1px solid var(--neon-green);
+      color: var(--neon-green);
     }
 
     .btn-format {
@@ -327,7 +340,7 @@
       color: var(--neon-cyan);
     }
 
-    /* Plantilla oculta para renderizar PDF estilo Hacker/IDE */
+    /* Plantilla oculta para PDF */
     #pdf-template {
       display: none;
       background: #0d1117;
@@ -371,11 +384,14 @@
       .workspace { flex-direction: row; }
       .panel { position: relative; display: flex !important; flex: 1; }
       .panel:first-child { border-right: 1px solid var(--border-glow); }
-      .btn { font-size: 0.85rem; padding: 12px; }
+      .btn { font-size: 0.85rem; padding: 12px; gap: 6px; }
     }
   </style>
 </head>
 <body>
+
+  <!-- Input Oculto para Cargar Archivo -->
+  <input type="file" id="file-input" accept=".html,.htm,.txt" style="display: none;" onchange="handleFileUpload(event)">
 
   <!-- Header -->
   <header>
@@ -401,6 +417,7 @@
       </div>
       <!-- Barra de inserción rápida para móvil -->
       <div class="toolbar-quick">
+        <button class="quick-btn upload" onclick="triggerFileSelect()">📂 CARGAR</button>
         <button class="quick-btn highlight" onclick="formatCode()">⚡ FORMATEAR</button>
         <button class="quick-btn" onclick="insertTag('<div>', '</div>')">&lt;div&gt;</button>
         <button class="quick-btn" onclick="insertTag('<h1>', '</h1>')">&lt;h1&gt;</button>
@@ -419,7 +436,8 @@
 
   <!-- Barra de Acciones -->
   <div class="action-bar">
-    <button class="btn btn-secondary" onclick="clearCode()">&#128465; LIMPIAR</button>
+    <button class="btn btn-secondary" onclick="clearCode()">&#128465; BORRAR</button>
+    <button class="btn btn-load" onclick="triggerFileSelect()">📂 CARGAR</button>
     <button class="btn btn-format" onclick="formatCode()">⚡ FORMATEAR</button>
     
     <!-- Menú Desplegable de Descarga -->
@@ -441,7 +459,7 @@
     </div>
   </div>
 
-  <!-- Elemento temporal para generación de PDF cibernético -->
+  <!-- Elemento temporal para generación de PDF -->
   <div id="pdf-template">
     <div class="pdf-header">
       <span class="pdf-title">HTML APP // CODE_EXPORT.SYS</span>
@@ -453,6 +471,7 @@
   <script>
     const previewOutput = document.getElementById('preview-output');
     const statusTag = document.getElementById('status-tag');
+    const fileInput = document.getElementById('file-input');
     const STORAGE_KEY = 'html_app_code_save';
 
     const initialTemplate = `<!DOCTYPE html>
@@ -482,7 +501,7 @@
 <body>
   <div class="card">
     <h1>¡HTML APP Cyber-Core!</h1>
-    <p>Exportación a HTML, TXT y PDF disponible.</p>
+    <p>Soporte para carga de archivos activos.</p>
   </div>
 </body>
 </html>`;
@@ -519,6 +538,34 @@
         }, 1500);
       }, 500);
     });
+
+    /* Lógica de Carga de Archivos */
+    function triggerFileSelect() {
+      fileInput.click();
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const content = e.target.result;
+        editor.setValue(content);
+        updatePreview();
+        
+        statusTag.textContent = 'ARCHIVO CARGADO';
+        statusTag.className = 'status-tag loaded';
+
+        setTimeout(() => {
+          statusTag.textContent = 'SYS::READY';
+          statusTag.className = 'status-tag';
+        }, 2000);
+      };
+
+      reader.readAsText(file);
+      fileInput.value = ''; // Limpiar input para permitir recargar el mismo archivo si se requiere
+    }
 
     function formatCode() {
       const currentCode = editor.getValue();
@@ -589,7 +636,6 @@
       menu.classList.toggle('show');
     }
 
-    // Cerrar menú si se hace clic fuera
     document.addEventListener('click', (e) => {
       const container = document.querySelector('.dropdown-container');
       if (container && !container.contains(e.target)) {
@@ -597,7 +643,6 @@
       }
     });
 
-    /* Lógica unificada de exportación */
     function downloadAs(format) {
       document.getElementById('download-menu').classList.remove('show');
       const code = editor.getValue();
