@@ -105,6 +105,47 @@
       text-shadow: 0 0 5px var(--neon-cyan);
     }
 
+    /* Header Controls Right */
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .view-mode-selector {
+      display: flex;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 2px 4px;
+      border-radius: 4px;
+      border: 1px solid rgba(0, 243, 255, 0.2);
+    }
+
+    .icon-mode-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.1rem; /* Mismo tamaño relativo a la tipografía base */
+      line-height: 1;
+      padding: 4px 6px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.2s ease;
+      opacity: 0.5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-mode-btn:hover {
+      opacity: 0.8;
+    }
+
+    .icon-mode-btn.active {
+      opacity: 1;
+      background: rgba(0, 243, 255, 0.2);
+      box-shadow: 0 0 8px rgba(0, 243, 255, 0.4);
+    }
+
     /* Indicadores de estado */
     .status-tag {
       font-size: 0.65rem;
@@ -378,13 +419,26 @@
       color: #a5d6ff;
     }
 
-    /* Layout Escritorio */
+    /* Reglas para Modo Escritorio Forzado */
+    body.mode-desktop .tabs { display: none !important; }
+    body.mode-desktop .workspace { flex-direction: row !important; }
+    body.mode-desktop .panel { position: relative !important; display: flex !important; flex: 1 !important; }
+    body.mode-desktop .panel:first-child { border-right: 1px solid var(--border-glow); }
+    body.mode-desktop .btn { font-size: 0.85rem; padding: 12px; gap: 6px; }
+
+    /* Reglas para Modo Móvil Forzado */
+    body.mode-mobile .tabs { display: flex !important; }
+    body.mode-mobile .workspace { flex-direction: column !important; }
+    body.mode-mobile .panel { position: absolute !important; display: none; }
+    body.mode-mobile .panel.active { display: flex !important; }
+
+    /* Layout Adaptativo por Defecto (pantallas anchas) */
     @media (min-width: 768px) {
-      .tabs { display: none; }
-      .workspace { flex-direction: row; }
-      .panel { position: relative; display: flex !important; flex: 1; }
-      .panel:first-child { border-right: 1px solid var(--border-glow); }
-      .btn { font-size: 0.85rem; padding: 12px; gap: 6px; }
+      body:not(.mode-mobile) .tabs { display: none; }
+      body:not(.mode-mobile) .workspace { flex-direction: row; }
+      body:not(.mode-mobile) .panel { position: relative; display: flex !important; flex: 1; }
+      body:not(.mode-mobile) .panel:first-child { border-right: 1px solid var(--border-glow); }
+      body:not(.mode-mobile) .btn { font-size: 0.85rem; padding: 12px; gap: 6px; }
     }
   </style>
 </head>
@@ -399,7 +453,15 @@
       <div class="brand-logo"></div>
       <div class="brand-title">HTML <span>APP</span></div>
     </div>
-    <div id="status-tag" class="status-tag">SYS::READY</div>
+    
+    <div class="header-controls">
+      <div id="status-tag" class="status-tag">SYS::READY</div>
+      <!-- Selector de Modo de Dispositivo -->
+      <div class="view-mode-selector">
+        <button id="btn-mode-mobile" class="icon-mode-btn" title="Modo Móvil" onclick="setDeviceMode('mobile')">📱</button>
+        <button id="btn-mode-desktop" class="icon-mode-btn" title="Modo Escritorio" onclick="setDeviceMode('desktop')">🖥️</button>
+      </div>
+    </div>
   </header>
 
   <!-- Control de Pestañas Móviles -->
@@ -473,6 +535,7 @@
     const statusTag = document.getElementById('status-tag');
     const fileInput = document.getElementById('file-input');
     const STORAGE_KEY = 'html_app_code_save';
+    const MODE_KEY = 'html_app_device_mode';
 
     const initialTemplate = `<!DOCTYPE html>
 <html lang="es">
@@ -539,6 +602,37 @@
       }, 500);
     });
 
+    /* Lógica de Cambio de Modo Móvil / Escritorio */
+    function setDeviceMode(mode) {
+      document.body.classList.remove('mode-mobile', 'mode-desktop');
+      document.getElementById('btn-mode-mobile').classList.remove('active');
+      document.getElementById('btn-mode-desktop').classList.remove('active');
+
+      if (mode === 'mobile') {
+        document.body.classList.add('mode-mobile');
+        document.getElementById('btn-mode-mobile').classList.add('active');
+        switchTab('editor'); // En modo móvil iniciamos mostrando el editor
+      } else {
+        document.body.classList.add('mode-desktop');
+        document.getElementById('btn-mode-desktop').classList.add('active');
+      }
+
+      localStorage.setItem(MODE_KEY, mode);
+      setTimeout(() => editor.refresh(), 100);
+    }
+
+    // Cargar preferencia de vista previa o detectar automáticamente
+    const savedMode = localStorage.getItem(MODE_KEY);
+    if (savedMode) {
+      setDeviceMode(savedMode);
+    } else {
+      if (window.innerWidth < 768) {
+        setDeviceMode('mobile');
+      } else {
+        setDeviceMode('desktop');
+      }
+    }
+
     /* Lógica de Carga de Archivos */
     function triggerFileSelect() {
       fileInput.click();
@@ -564,7 +658,7 @@
       };
 
       reader.readAsText(file);
-      fileInput.value = ''; // Limpiar input para permitir recargar el mismo archivo si se requiere
+      fileInput.value = '';
     }
 
     function formatCode() {
