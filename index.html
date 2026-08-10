@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML APP // Cyber Studio</title>
+  <style>
+    :root {
+      --bg-dark: #0a0d14;
+      --bg-panel: #121824;
+      --neon-cyan: #00f3ff;
+      --neon-magenta: #ff0055;
+      --neon-green: #00ff66;
+      --text-main: #e2e8f0;
+      --text-dim: #64748b;
+      --border-glow: rgba(0, 243, 255, 0.3);
+      --font-code: 'Courier New', Courier, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Background Grid FX */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: 
+        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+      background-size: 20px 20px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Header */
+    header {
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.15);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-logo {
+      width: 12px;
+      height: 12px;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 8px var(--neon-cyan);
+      transform: rotate(45deg);
+    }
+
+    .brand-title {
+      font-size: 1.1rem;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    .brand-title span {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 5px var(--neon-cyan);
+    }
+
+    .status-tag {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border: 1px solid var(--neon-green);
+      color: var(--neon-green);
+      border-radius: 3px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Navigation Tabs */
+    .tabs {
+      display: flex;
+      background: #06080e;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      z-index: 10;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      color: var(--neon-cyan);
+      background: rgba(0, 243, 255, 0.05);
+      border-bottom: 2px solid var(--neon-cyan);
+      text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+    }
+
+    /* Main Workspace */
+    .workspace {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      z-index: 1;
+    }
+
+    .panel {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      display: none;
+      flex-direction: column;
+    }
+
+    .panel.active {
+      display: flex;
+    }
+
+    /* Editor View */
+    .editor-container {
+      position: relative;
+      flex: 1;
+      display: flex;
+      background: #080a10;
+    }
+
+    textarea#code-input {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      color: #00ffcc;
+      border: none;
+      padding: 16px;
+      font-family: var(--font-code);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+      tab-size: 2;
+      white-space: pre;
+    }
+
+    /* Quick Tags Toolbar for Mobile */
+    .toolbar-quick {
+      display: flex;
+      gap: 6px;
+      padding: 8px 12px;
+      background: var(--bg-panel);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .quick-btn {
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid var(--border-glow);
+      color: var(--neon-cyan);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-family: var(--font-code);
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    .quick-btn:active {
+      background: var(--neon-cyan);
+      color: #000;
+    }
+
+    /* Preview View */
+    iframe#preview-output {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #ffffff;
+    }
+
+    /* Bottom Action Controls */
+    .action-bar {
+      padding: 12px 16px;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border-glow);
+      display: flex;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
+      color: #000;
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 0, 85, 0.1);
+      border: 1px solid var(--neon-magenta);
+      color: var(--neon-magenta);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Desktop Responsive Layout */
+    @media (min-width: 768px) {
+      .tabs { display: none; }
+      .workspace { flex-direction: row; }
+      .panel { position: relative; display: flex !important; flex: 1; }
+      .panel:first-child { border-right: 1px solid var(--border-glow); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo"></div>
+      <div class="brand-title">HTML <span>APP</span></div>
+    </div>
+    <div class="status-tag">SYS::READY</div>
+  </header>
+
+  <!-- Mobile Tab Controls -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('editor')">
+      &lt;/&gt; CÓDIGO
+    </button>
+    <button class="tab-btn" onclick="switchTab('preview')">
+      &#128065; VISTA PREVIA
+    </button>
+  </div>
+
+  <!-- Workspace -->
+  <div class="workspace">
+    <!-- Editor Panel -->
+    <div id="panel-editor" class="panel active">
+      <div class="editor-container">
+        <textarea id="code-input" spellcheck="false" placeholder="Escribe tu código HTML/CSS/JS aquí..."></textarea>
+      </div>
+      <!-- Quick Keyboard Shortcuts for Mobile -->
+      <div class="toolbar-quick">
+        <button class="quick-btn" onclick="insertTag('<div>', '</div>')">&lt;div&gt;</button>
+        <button class="quick-btn" onclick="insertTag('<h1>', '</h1>')">&lt;h1&gt;</button>
+        <button class="quick-btn" onclick="insertTag('<p>', '</p>')">&lt;p&gt;</button>
+        <button class="quick-btn" onclick="insertTag('<style>\n', '\n</style>')">&lt;style&gt;</button>
+        <button class="quick-btn" onclick="insertTag('<script>\n', '\n<\/script>')">&lt;script&gt;</button>
+        <button class="quick-btn" onclick="insertTag('class=""', '"')">class</button>
+      </div>
+    </div>
+
+    <!-- Preview Panel -->
+    <div id="panel-preview" class="panel">
+      <iframe id="preview-output"></iframe>
+    </div>
+  </div>
+
+  <!-- Bottom Actions -->
+  <div class="action-bar">
+    <button class="btn btn-secondary" onclick="clearCode()">
+      &#128465; LIMPIAR
+    </button>
+    <button class="btn btn-primary" onclick="downloadFile()">
+      &#128190; DESCARGAR .HTML
+    </button>
+  </div>
+
+  <script>
+    const codeInput = document.getElementById('code-input');
+    const previewOutput = document.getElementById('preview-output');
+
+    // Default Code Template
+    const initialCode = `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <style>
+    body {
+      background: #0d1117;
+      color: #58a6ff;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      border: 1px solid #30363d;
+      padding: 24px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    h1 { color: #3fb950; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>¡HTML APP Activo!</h1>
+    <p>Edita este código para ver cambios en tiempo real.</p>
+  </div>
+</body>
+</html>`;
+
+    // Initialize Editor
+    codeInput.value = initialCode;
+    updatePreview();
+
+    // Event Listener for Live Preview
+    codeInput.addEventListener('input', updatePreview);
+
+    function updatePreview() {
+      const code = codeInput.value;
+      const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
+      iframeDoc.open();
+      iframeDoc.write(code);
+      iframeDoc.close();
+    }
+
+    // Switch Tabs on Mobile View
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+
+      if (tabName === 'editor') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('panel-editor').classList.add('active');
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('panel-preview').classList.add('active');
+        updatePreview();
+      }
+    }
+
+    // Quick Tag Insertion Helper
+    function insertTag(openTag, closeTag) {
+      const start = codeInput.selectionStart;
+      const end = codeInput.selectionEnd;
+      const selectedText = codeInput.value.substring(start, end);
+      const replacement = openTag + selectedText + closeTag;
+
+      codeInput.value = codeInput.value.substring(0, start) + replacement + codeInput.value.substring(end);
+      codeInput.focus();
+      codeInput.selectionStart = start + openTag.length;
+      codeInput.selectionEnd = start + openTag.length + selectedText.length;
+      updatePreview();
+    }
+
+    // Download HTML File
+    function downloadFile() {
+      const blob = new Blob([codeInput.value], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'index.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Clear Code Function
+    function clearCode() {
+      if (confirm('¿Deseas borrar todo el código del editor?')) {
+        codeInput.value = '';
+        updatePreview();
+      }
+    }
+  </script>
+</body>
+</html>
