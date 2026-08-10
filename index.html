@@ -14,6 +14,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
 
+  <!-- JS Beautify (Auto-formateador de HTML/CSS/JS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-html.min.js"></script>
+
   <style>
     :root {
       --bg-dark: #0a0d14;
@@ -21,6 +26,7 @@
       --neon-cyan: #00f3ff;
       --neon-magenta: #ff0055;
       --neon-green: #00ff66;
+      --neon-yellow: #ffcc00;
       --text-main: #e2e8f0;
       --text-dim: #64748b;
       --border-glow: rgba(0, 243, 255, 0.3);
@@ -111,6 +117,11 @@
     .status-tag.saving {
       border-color: var(--neon-cyan);
       color: var(--neon-cyan);
+    }
+
+    .status-tag.formatted {
+      border-color: var(--neon-yellow);
+      color: var(--neon-yellow);
     }
 
     /* Pestañas para Móvil */
@@ -211,6 +222,12 @@
       cursor: pointer;
     }
 
+    .quick-btn.highlight {
+      background: rgba(255, 204, 0, 0.12);
+      border-color: var(--neon-yellow);
+      color: var(--neon-yellow);
+    }
+
     .quick-btn:active {
       background: var(--neon-cyan);
       color: #000;
@@ -230,24 +247,24 @@
       background: var(--bg-panel);
       border-top: 1px solid var(--border-glow);
       display: flex;
-      gap: 12px;
+      gap: 10px;
       z-index: 10;
     }
 
     .btn {
       flex: 1;
-      padding: 12px;
+      padding: 12px 8px;
       border: none;
       border-radius: 4px;
       font-weight: 800;
-      font-size: 0.85rem;
-      letter-spacing: 1px;
+      font-size: 0.78rem;
+      letter-spacing: 0.8px;
       text-transform: uppercase;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       transition: all 0.2s;
     }
 
@@ -255,6 +272,12 @@
       background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
       color: #000;
       box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    }
+
+    .btn-format {
+      background: rgba(255, 204, 0, 0.1);
+      border: 1px solid var(--neon-yellow);
+      color: var(--neon-yellow);
     }
 
     .btn-secondary {
@@ -273,6 +296,7 @@
       .workspace { flex-direction: row; }
       .panel { position: relative; display: flex !important; flex: 1; }
       .panel:first-child { border-right: 1px solid var(--border-glow); }
+      .btn { font-size: 0.85rem; padding: 12px; }
     }
   </style>
 </head>
@@ -306,6 +330,7 @@
       </div>
       <!-- Barra de inserción rápida para móvil -->
       <div class="toolbar-quick">
+        <button class="quick-btn highlight" onclick="formatCode()">⚡ FORMATEAR</button>
         <button class="quick-btn" onclick="insertTag('<div>', '</div>')">&lt;div&gt;</button>
         <button class="quick-btn" onclick="insertTag('<h1>', '</h1>')">&lt;h1&gt;</button>
         <button class="quick-btn" onclick="insertTag('<p>', '</p>')">&lt;p&gt;</button>
@@ -325,6 +350,9 @@
   <div class="action-bar">
     <button class="btn btn-secondary" onclick="clearCode()">
       &#128465; LIMPIAR
+    </button>
+    <button class="btn btn-format" onclick="formatCode()">
+      ⚡ FORMATEAR
     </button>
     <button class="btn btn-primary" onclick="downloadFile()">
       &#128190; DESCARGAR .HTML
@@ -364,7 +392,7 @@
 <body>
   <div class="card">
     <h1>¡HTML APP Cyber-Core!</h1>
-    <p>Autoguardado y sintaxis activa.</p>
+    <p>Autoguardado, sintaxis y auto-formateado activo.</p>
   </div>
 </body>
 </html>`;
@@ -388,7 +416,7 @@
     let saveTimeout;
     editor.on('change', () => {
       statusTag.textContent = 'GUARDANDO...';
-      statusTag.classList.add('saving');
+      statusTag.className = 'status-tag saving';
 
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(() => {
@@ -397,13 +425,52 @@
         updatePreview();
 
         statusTag.textContent = 'GUARDADO';
-        statusTag.classList.remove('saving');
+        statusTag.className = 'status-tag';
 
         setTimeout(() => {
           statusTag.textContent = 'SYS::READY';
         }, 1500);
       }, 500);
     });
+
+    // Función de Auto-Formateado e Indentación
+    function formatCode() {
+      const currentCode = editor.getValue();
+      if (!currentCode.trim()) return;
+
+      const formatted = html_beautify(currentCode, {
+        indent_size: 2,
+        indent_char: " ",
+        max_preserve_newlines: 1,
+        preserve_newlines: true,
+        keep_array_indentation: false,
+        break_chained_methods: false,
+        indent_scripts: "normal",
+        brace_style: "collapse",
+        space_before_conditional: true,
+        unescape_strings: false,
+        jslint_happy: false,
+        end_with_newline: false,
+        wrap_line_length: 0,
+        indent_inner_html: true,
+        comma_first: false,
+        eoc: "\n"
+      });
+
+      // Preservar la posición del scroll del editor
+      const scrollInfo = editor.getScrollInfo();
+      editor.setValue(formatted);
+      editor.scrollTo(scrollInfo.left, scrollInfo.top);
+
+      // Notificación visual de estado
+      statusTag.textContent = 'FORMATEADO';
+      statusTag.className = 'status-tag formatted';
+      
+      setTimeout(() => {
+        statusTag.textContent = 'SYS::READY';
+        statusTag.className = 'status-tag';
+      }, 1500);
+    }
 
     // Actualizar Render del iframe
     function updatePreview() {
