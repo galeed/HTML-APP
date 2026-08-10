@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HTML APP // Cyber Studio</title>
+  
+  <!-- CodeMirror 5 (Editor + Resaltado Sintaxis) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/abbott.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+
   <style>
     :root {
       --bg-dark: #0a0d14;
@@ -34,7 +44,7 @@
       overflow: hidden;
     }
 
-    /* Background Grid FX */
+    /* Grid cibernética de fondo */
     body::before {
       content: "";
       position: absolute;
@@ -86,17 +96,24 @@
       text-shadow: 0 0 5px var(--neon-cyan);
     }
 
+    /* Indicador dinámico de estado */
     .status-tag {
       font-size: 0.65rem;
-      padding: 2px 6px;
+      padding: 3px 8px;
       border: 1px solid var(--neon-green);
       color: var(--neon-green);
       border-radius: 3px;
       letter-spacing: 1px;
       text-transform: uppercase;
+      transition: all 0.3s ease;
     }
 
-    /* Navigation Tabs */
+    .status-tag.saving {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+    }
+
+    /* Pestañas para Móvil */
     .tabs {
       display: flex;
       background: #06080e;
@@ -129,7 +146,7 @@
       text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
     }
 
-    /* Main Workspace */
+    /* Área de Trabajo */
     .workspace {
       flex: 1;
       position: relative;
@@ -149,31 +166,30 @@
       display: flex;
     }
 
-    /* Editor View */
+    /* Estilos e Integración de CodeMirror */
     .editor-container {
       position: relative;
       flex: 1;
       display: flex;
       background: #080a10;
+      overflow: hidden;
     }
 
-    textarea#code-input {
+    .CodeMirror {
       width: 100%;
       height: 100%;
-      background: transparent;
-      color: #00ffcc;
-      border: none;
-      padding: 16px;
+      background: #080a10 !important;
       font-family: var(--font-code);
       font-size: 0.9rem;
       line-height: 1.5;
-      resize: none;
-      outline: none;
-      tab-size: 2;
-      white-space: pre;
     }
 
-    /* Quick Tags Toolbar for Mobile */
+    .CodeMirror-gutters {
+      background: #0d121d !important;
+      border-right: 1px solid rgba(0, 243, 255, 0.1) !important;
+    }
+
+    /* Atajos Rápidos Móviles */
     .toolbar-quick {
       display: flex;
       gap: 6px;
@@ -200,7 +216,7 @@
       color: #000;
     }
 
-    /* Preview View */
+    /* Vista Previa */
     iframe#preview-output {
       width: 100%;
       height: 100%;
@@ -208,7 +224,7 @@
       background: #ffffff;
     }
 
-    /* Bottom Action Controls */
+    /* Botones de Acción */
     .action-bar {
       padding: 12px 16px;
       background: var(--bg-panel);
@@ -251,7 +267,7 @@
       transform: scale(0.98);
     }
 
-    /* Desktop Responsive Layout */
+    /* Layout Escritorio */
     @media (min-width: 768px) {
       .tabs { display: none; }
       .workspace { flex-direction: row; }
@@ -268,10 +284,10 @@
       <div class="brand-logo"></div>
       <div class="brand-title">HTML <span>APP</span></div>
     </div>
-    <div class="status-tag">SYS::READY</div>
+    <div id="status-tag" class="status-tag">SYS::READY</div>
   </header>
 
-  <!-- Mobile Tab Controls -->
+  <!-- Control de Pestañas Móviles -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('editor')">
       &lt;/&gt; CÓDIGO
@@ -283,12 +299,12 @@
 
   <!-- Workspace -->
   <div class="workspace">
-    <!-- Editor Panel -->
+    <!-- Panel Editor -->
     <div id="panel-editor" class="panel active">
       <div class="editor-container">
-        <textarea id="code-input" spellcheck="false" placeholder="Escribe tu código HTML/CSS/JS aquí..."></textarea>
+        <textarea id="code-input"></textarea>
       </div>
-      <!-- Quick Keyboard Shortcuts for Mobile -->
+      <!-- Barra de inserción rápida para móvil -->
       <div class="toolbar-quick">
         <button class="quick-btn" onclick="insertTag('<div>', '</div>')">&lt;div&gt;</button>
         <button class="quick-btn" onclick="insertTag('<h1>', '</h1>')">&lt;h1&gt;</button>
@@ -299,13 +315,13 @@
       </div>
     </div>
 
-    <!-- Preview Panel -->
+    <!-- Panel Vista Previa -->
     <div id="panel-preview" class="panel">
       <iframe id="preview-output"></iframe>
     </div>
   </div>
 
-  <!-- Bottom Actions -->
+  <!-- Barra de Acciones -->
   <div class="action-bar">
     <button class="btn btn-secondary" onclick="clearCode()">
       &#128465; LIMPIAR
@@ -316,11 +332,12 @@
   </div>
 
   <script>
-    const codeInput = document.getElementById('code-input');
     const previewOutput = document.getElementById('preview-output');
+    const statusTag = document.getElementById('status-tag');
+    const STORAGE_KEY = 'html_app_code_save';
 
-    // Default Code Template
-    const initialCode = `<!DOCTYPE html>
+    // Plantilla inicial por defecto
+    const initialTemplate = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <style>
@@ -341,33 +358,63 @@
       text-align: center;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
-    h1 { color: #3fb950; margin-bottom: 8px; }
+    h1 { color: #00ff66; margin-bottom: 8px; }
   </style>
 </head>
 <body>
   <div class="card">
-    <h1>¡HTML APP Activo!</h1>
-    <p>Edita este código para ver cambios en tiempo real.</p>
+    <h1>¡HTML APP Cyber-Core!</h1>
+    <p>Autoguardado y sintaxis activa.</p>
   </div>
 </body>
 </html>`;
 
-    // Initialize Editor
-    codeInput.value = initialCode;
+    // Cargar código desde localStorage o usar plantilla
+    const savedCode = localStorage.getItem(STORAGE_KEY) || initialTemplate;
+
+    // Inicializar CodeMirror
+    const editor = CodeMirror.fromTextArea(document.getElementById('code-input'), {
+      mode: 'htmlmixed',
+      theme: 'abbott',
+      lineNumbers: true,
+      lineWrapping: true,
+      tabSize: 2
+    });
+
+    editor.setValue(savedCode);
     updatePreview();
 
-    // Event Listener for Live Preview
-    codeInput.addEventListener('input', updatePreview);
+    // Event Listener con Debounce para Guardado y Vista Previa
+    let saveTimeout;
+    editor.on('change', () => {
+      statusTag.textContent = 'GUARDANDO...';
+      statusTag.classList.add('saving');
 
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        const currentCode = editor.getValue();
+        localStorage.setItem(STORAGE_KEY, currentCode);
+        updatePreview();
+
+        statusTag.textContent = 'GUARDADO';
+        statusTag.classList.remove('saving');
+
+        setTimeout(() => {
+          statusTag.textContent = 'SYS::READY';
+        }, 1500);
+      }, 500);
+    });
+
+    // Actualizar Render del iframe
     function updatePreview() {
-      const code = codeInput.value;
+      const code = editor.getValue();
       const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
       iframeDoc.open();
       iframeDoc.write(code);
       iframeDoc.close();
     }
 
-    // Switch Tabs on Mobile View
+    // Cambiar Pestañas en Vista Móvil
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
@@ -375,6 +422,7 @@
       if (tabName === 'editor') {
         document.querySelectorAll('.tab-btn')[0].classList.add('active');
         document.getElementById('panel-editor').classList.add('active');
+        editor.refresh(); // Refrescar dimensiones de CodeMirror
       } else {
         document.querySelectorAll('.tab-btn')[1].classList.add('active');
         document.getElementById('panel-preview').classList.add('active');
@@ -382,23 +430,23 @@
       }
     }
 
-    // Quick Tag Insertion Helper
+    // Insertar Etiquetas Rápidas en la posición del cursor
     function insertTag(openTag, closeTag) {
-      const start = codeInput.selectionStart;
-      const end = codeInput.selectionEnd;
-      const selectedText = codeInput.value.substring(start, end);
-      const replacement = openTag + selectedText + closeTag;
+      const doc = editor.getDoc();
+      const cursor = doc.getCursor();
+      const selection = doc.getSelection();
 
-      codeInput.value = codeInput.value.substring(0, start) + replacement + codeInput.value.substring(end);
-      codeInput.focus();
-      codeInput.selectionStart = start + openTag.length;
-      codeInput.selectionEnd = start + openTag.length + selectedText.length;
-      updatePreview();
+      doc.replaceSelection(openTag + selection + closeTag);
+      
+      if (selection.length === 0) {
+        doc.setCursor({ line: cursor.line, ch: cursor.ch + openTag.length });
+      }
+      editor.focus();
     }
 
-    // Download HTML File
+    // Descargar Archivo HTML
     function downloadFile() {
-      const blob = new Blob([codeInput.value], { type: 'text/html' });
+      const blob = new Blob([editor.getValue()], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -409,10 +457,11 @@
       URL.revokeObjectURL(url);
     }
 
-    // Clear Code Function
+    // Limpiar Editor y Cache
     function clearCode() {
-      if (confirm('¿Deseas borrar todo el código del editor?')) {
-        codeInput.value = '';
+      if (confirm('¿Deseas borrar todo el código y reiniciar el almacenamiento?')) {
+        editor.setValue('');
+        localStorage.removeItem(STORAGE_KEY);
         updatePreview();
       }
     }
