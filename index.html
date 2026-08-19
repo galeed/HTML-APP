@@ -311,12 +311,12 @@
 
     .btn {
       flex: 1;
-      padding: 10px 4px;
+      padding: 10px 2px;
       border: none;
       border-radius: 4px;
       font-weight: 800;
-      font-size: 0.7rem;
-      letter-spacing: 0.3px;
+      font-size: 0.65rem;
+      letter-spacing: 0.2px;
       text-transform: uppercase;
       cursor: pointer;
       display: flex;
@@ -330,6 +330,12 @@
       background: linear-gradient(135deg, var(--neon-cyan), #0088ff);
       color: #000;
       box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    }
+
+    .btn-copy {
+      background: rgba(0, 243, 255, 0.12);
+      border: 1px solid var(--neon-cyan);
+      color: var(--neon-cyan);
     }
 
     .btn-load {
@@ -501,6 +507,7 @@
 
   <div class="action-bar">
     <button class="btn btn-secondary" onclick="clearCode()">&#128465; BORRAR</button>
+    <button class="btn btn-copy" onclick="copyCode()">📋 COPIAR</button>
     <button class="btn btn-load" onclick="triggerFileSelect()">📂 CARGAR</button>
     <button class="btn btn-format" onclick="formatCode()">⚡ FORMATEAR</button>
     
@@ -641,7 +648,6 @@
       const file = event.target.files[0];
       if (!file) return;
 
-      // Leer archivo forzando codificación UTF-8
       const reader = new FileReader();
       reader.onload = function(e) {
         const content = e.target.result;
@@ -659,6 +665,47 @@
 
       reader.readAsText(file, 'UTF-8');
       fileInput.value = '';
+    }
+
+    function copyCode() {
+      const code = editor.getValue();
+      if (!code) return;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(() => {
+          notifyCopied();
+        }).catch(() => {
+          fallbackCopyText(code);
+        });
+      } else {
+        fallbackCopyText(code);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        notifyCopied();
+      } catch (err) {
+        alert('No se pudo copiar automáticamente.');
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function notifyCopied() {
+      statusTag.textContent = '¡COPIADO!';
+      statusTag.className = 'status-tag formatted';
+      setTimeout(() => {
+        statusTag.textContent = 'SYS::READY';
+        statusTag.className = 'status-tag';
+      }, 1500);
     }
 
     function formatCode() {
@@ -691,7 +738,6 @@
     function updatePreview() {
       let code = editor.getValue();
 
-      // Asegurar meta charset UTF-8 en el contenido inyectado
       if (!code.includes('<meta charset') && !code.includes('charset=')) {
         if (code.includes('<head>')) {
           code = code.replace('<head>', '<head>\n  <meta charset="UTF-8">');
@@ -752,7 +798,6 @@
 
       if (format === 'html' || format === 'txt') {
         const mime = format === 'html' ? 'text/html;charset=utf-8' : 'text/plain;charset=utf-8';
-        // \uFEFF añade la marca de orden de bytes (BOM) para forzar UTF-8 en cualquier editor externo
         const blob = new Blob(['\uFEFF' + code], { type: mime });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
