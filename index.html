@@ -673,10 +673,24 @@
     });
 
     editor.setValue(savedCode);
-    updatePreview();
+        editor.setValue(savedCode);
 
     let saveTimeout;
     let isInternalUpdate = false;
+
+    // 1. PRIMERO configuramos el modo de dispositivo y aplicamos el CSS correspondiente
+    const savedMode = localStorage.getItem(MODE_KEY);
+    if (savedMode) {
+      setDeviceMode(savedMode);
+    } else {
+      if (window.innerWidth < 768) {
+        setDeviceMode('mobile');
+      } else {
+        setDeviceMode('desktop');
+      }
+    }
+
+    updatePreview();
 
     editor.on('change', () => {
       if (isInternalUpdate) return;
@@ -845,38 +859,57 @@
     let isUpdatingPreview = false;
 
     function updatePreview() {
-      if (isUpdatingPreview) return;
-      isUpdatingPreview = true;
+      let isUpdatingPreview = false;
 
-      let code = editor.getValue();
+function updatePreview() {
+  if (isUpdatingPreview) return;
+  isUpdatingPreview = true;
 
-      if (!code.includes('<meta charset') && !code.includes('charset=')) {
-        if (code.includes('<head>')) {
-          code = code.replace('<head>', '<head>\n  <meta charset="UTF-8">');
-        } else {
-          code = '<meta charset="UTF-8">\n' + code;
-        }
+  try {
+    let code = editor.getValue();
+
+    if (!code.includes('<meta charset') && !code.includes('charset=')) {
+      if (code.includes('<head>')) {
+        code = code.replace('<head>', '<head>\n  <meta charset="UTF-8">');
+      } else {
+        code = '<meta charset="UTF-8">\n' + code;
       }
+    }
 
-      const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
-      iframeDoc.open();
-      iframeDoc.write(code);
-      iframeDoc.close();
+    const iframeWin = previewOutput.contentWindow;
+    const iframeDoc = previewOutput.contentDocument || (iframeWin ? iframeWin.document : null);
 
-      setTimeout(() => {
+    // Si el iframe está oculto y no tiene documento, liberamos el candado y salimos de forma segura
+    if (!iframeDoc) {
+      isUpdatingPreview = false;
+      return;
+    }
+
+    iframeDoc.open();
+    iframeDoc.write(code);
+    iframeDoc.close();
+
+    setTimeout(() => {
+      try {
         if (iframeDoc.body) {
           iframeDoc.body.contentEditable = "true";
           
-          iframeDoc.body.oninput = () => {
-            syncVisualToCode(iframeDoc);
-          };
-          iframeDoc.body.onkeyup = () => {
-            syncVisualToCode(iframeDoc);
-          };
+          iframeDoc.body.oninput = () => syncVisualToCode(iframeDoc);
+          iframeDoc.body.onkeyup = () => syncVisualToCode(iframeDoc);
         }
+      } catch (e) {
+        console.error("Error asignando eventos al iframe:", e);
+      } finally {
         isUpdatingPreview = false;
-      }, 300);
-    }
+      }
+    }, 300);
+
+  } catch (error) {
+    console.error("Error crítico al actualizar la vista previa:", error);
+    isUpdatingPreview = false; // Liberamos el bloqueo en caso de cualquier error
+  }
+}
+
 
     function syncVisualToCode(iframeDoc) {
       isInternalUpdate = true;
