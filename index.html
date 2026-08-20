@@ -290,65 +290,6 @@
       color: #000;
     }
 
-    .preview-wrapper {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-      background: #fff;
-    }
-
-    .wysiwyg-bar {
-      background: #121824;
-      border-bottom: 1px solid var(--neon-cyan);
-      padding: 6px 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-      overflow-x: auto;
-    }
-
-    .wy-btn {
-      background: rgba(0, 243, 255, 0.1);
-      border: 1px solid var(--border-glow);
-      color: var(--neon-cyan);
-      padding: 4px 8px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      border-radius: 3px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-    }
-
-    .wy-btn:hover {
-      background: rgba(0, 243, 255, 0.25);
-    }
-
-    .wy-select {
-      background: #0a0d14;
-      border: 1px solid var(--neon-cyan);
-      color: var(--text-main);
-      padding: 4px 6px;
-      font-size: 0.75rem;
-      border-radius: 3px;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .wy-color {
-      background: transparent;
-      border: 1px solid var(--neon-cyan);
-      width: 26px;
-      height: 24px;
-      padding: 0;
-      border-radius: 3px;
-      cursor: pointer;
-    }
-
     iframe#preview-output {
       width: 100%;
       height: 100%;
@@ -397,7 +338,13 @@
       color: var(--neon-cyan);
     }
 
-    .btn-paste {
+    .btn-load {
+      background: rgba(0, 255, 102, 0.1);
+      border: 1px solid var(--neon-green);
+      color: var(--neon-green);
+    }
+
+    .btn-format {
       background: rgba(255, 204, 0, 0.1);
       border: 1px solid var(--neon-yellow);
       color: var(--neon-yellow);
@@ -407,12 +354,6 @@
       background: rgba(255, 0, 85, 0.1);
       border: 1px solid var(--neon-magenta);
       color: var(--neon-magenta);
-    }
-
-    .btn-load {
-      background: rgba(0, 255, 102, 0.1);
-      border: 1px solid var(--neon-green);
-      color: var(--neon-green);
     }
 
     .dropdown-container {
@@ -560,40 +501,15 @@
     </div>
 
     <div id="panel-preview" class="panel">
-      <div class="preview-wrapper">
-        <div class="wysiwyg-bar">
-          <button class="wy-btn" onclick="execWysiwyg('bold')"><b>B</b></button>
-          <button class="wy-btn" onclick="execWysiwyg('italic')"><i>I</i></button>
-          <button class="wy-btn" onclick="execWysiwyg('underline')"><u>U</u></button>
-          <select class="wy-select" onchange="execWysiwygArgs('fontSize', this.value); this.selectedIndex=0;">
-            <option value="" disabled selected>Tamaño</option>
-            <option value="1">1 (Chico)</option>
-            <option value="3">3 (Normal)</option>
-            <option value="5">5 (Grande)</option>
-            <option value="7">7 (Muy Grande)</option>
-          </select>
-          <select class="wy-select" onchange="execWysiwygArgs('fontName', this.value); this.selectedIndex=0;">
-            <option value="" disabled selected>Fuente</option>
-            <option value="Arial">Arial</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Verdana">Verdana</option>
-          </select>
-          <input type="color" class="wy-color" title="Color de Texto" onchange="execWysiwygArgs('foreColor', this.value)">
-          <button class="wy-btn" onclick="execWysiwyg('justifyLeft')">Izda</button>
-          <button class="wy-btn" onclick="execWysiwyg('justifyCenter')">Centro</button>
-          <button class="wy-btn" onclick="execWysiwyg('justifyRight')">Dcha</button>
-        </div>
-        <iframe id="preview-output"></iframe>
-      </div>
+      <iframe id="preview-output"></iframe>
     </div>
   </div>
 
   <div class="action-bar">
-    <button class="btn btn-copy" onclick="copyCode()">📋 COPIAR</button>
-    <button class="btn btn-paste" onclick="pasteCode()">📌 PEGAR</button>
     <button class="btn btn-secondary" onclick="clearCode()">&#128465; BORRAR</button>
+    <button class="btn btn-copy" onclick="copyCode()">📋 COPIAR</button>
     <button class="btn btn-load" onclick="triggerFileSelect()">📂 CARGAR</button>
+    <button class="btn btn-format" onclick="formatCode()">⚡ FORMATEAR</button>
     
     <div class="dropdown-container">
       <button class="btn btn-primary" onclick="toggleDownloadMenu()">
@@ -676,11 +592,7 @@
     updatePreview();
 
     let saveTimeout;
-    let isInternalUpdate = false;
-
     editor.on('change', () => {
-      if (isInternalUpdate) return;
-
       statusTag.textContent = 'GUARDANDO...';
       statusTag.className = 'status-tag saving';
 
@@ -761,7 +673,7 @@
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(code).then(() => {
-          notifyStatus('¡COPIADO!', 'formatted');
+          notifyCopied();
         }).catch(() => {
           fallbackCopyText(code);
         });
@@ -780,41 +692,16 @@
       textArea.select();
       try {
         document.execCommand('copy');
-        notifyStatus('¡COPIADO!', 'formatted');
+        notifyCopied();
       } catch (err) {
         alert('No se pudo copiar automáticamente.');
       }
       document.body.removeChild(textArea);
     }
 
-    function pasteCode() {
-      if (navigator.clipboard && navigator.clipboard.readText) {
-        navigator.clipboard.readText().then((text) => {
-          if (text) {
-            editor.setValue(text);
-            updatePreview();
-            notifyStatus('¡PEGADO!', 'loaded');
-          }
-        }).catch(() => {
-          fallbackPaste();
-        });
-      } else {
-        fallbackPaste();
-      }
-    }
-
-    function fallbackPaste() {
-      const text = prompt('Pega tu código aquí (Ctrl+V o Cmd+V):');
-      if (text !== null) {
-        editor.setValue(text);
-        updatePreview();
-        notifyStatus('¡PEGADO!', 'loaded');
-      }
-    }
-
-    function notifyStatus(msg, className) {
-      statusTag.textContent = msg;
-      statusTag.className = `status-tag ${className}`;
+    function notifyCopied() {
+      statusTag.textContent = '¡COPIADO!';
+      statusTag.className = 'status-tag formatted';
       setTimeout(() => {
         statusTag.textContent = 'SYS::READY';
         statusTag.className = 'status-tag';
@@ -839,15 +726,16 @@
       editor.setValue(formatted);
       editor.scrollTo(scrollInfo.left, scrollInfo.top);
 
-      notifyStatus('FORMATEADO', 'formatted');
+      statusTag.textContent = 'FORMATEADO';
+      statusTag.className = 'status-tag formatted';
+      
+      setTimeout(() => {
+        statusTag.textContent = 'SYS::READY';
+        statusTag.className = 'status-tag';
+      }, 1500);
     }
 
-    let isUpdatingPreview = false;
-
     function updatePreview() {
-      if (isUpdatingPreview) return;
-      isUpdatingPreview = true;
-
       let code = editor.getValue();
 
       if (!code.includes('<meta charset') && !code.includes('charset=')) {
@@ -862,61 +750,6 @@
       iframeDoc.open();
       iframeDoc.write(code);
       iframeDoc.close();
-
-      setTimeout(() => {
-        if (iframeDoc.body) {
-          iframeDoc.body.contentEditable = "true";
-          
-          iframeDoc.body.oninput = () => {
-            syncVisualToCode(iframeDoc);
-          };
-          iframeDoc.body.onkeyup = () => {
-            syncVisualToCode(iframeDoc);
-          };
-        }
-        isUpdatingPreview = false;
-      }, 300);
-    }
-
-    function syncVisualToCode(iframeDoc) {
-      isInternalUpdate = true;
-      const clone = iframeDoc.documentElement.cloneNode(true);
-      
-      clone.removeAttribute('contenteditable');
-      if (clone.querySelector('body')) {
-        clone.querySelector('body').removeAttribute('contenteditable');
-      }
-
-      const updatedHTML = '<!DOCTYPE html>\n' + clone.outerHTML;
-      
-      const scrollInfo = editor.getScrollInfo();
-      editor.setValue(updatedHTML);
-      editor.scrollTo(scrollInfo.left, scrollInfo.top);
-      
-      localStorage.setItem(STORAGE_KEY, updatedHTML);
-      isInternalUpdate = false;
-
-      statusTag.textContent = 'ACTUALIZADO';
-      statusTag.className = 'status-tag saving';
-      clearTimeout(window._syncTimer);
-      window._syncTimer = setTimeout(() => {
-        statusTag.textContent = 'SYS::READY';
-        statusTag.className = 'status-tag';
-      }, 1000);
-    }
-
-    function execWysiwyg(command) {
-      const iframeWin = previewOutput.contentWindow;
-      iframeWin.focus();
-      iframeWin.document.execCommand(command, false, null);
-      syncVisualToCode(iframeWin.document);
-    }
-
-    function execWysiwygArgs(command, value) {
-      const iframeWin = previewOutput.contentWindow;
-      iframeWin.focus();
-      iframeWin.document.execCommand(command, false, value);
-      syncVisualToCode(iframeWin.document);
     }
 
     function switchTab(tabName) {
