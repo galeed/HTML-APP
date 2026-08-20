@@ -290,7 +290,6 @@
       color: #000;
     }
 
-    /* Contenedor de la vista previa y su barra WYSIWYG superior */
     .preview-wrapper {
       display: flex;
       flex-direction: column;
@@ -398,13 +397,7 @@
       color: var(--neon-cyan);
     }
 
-    .btn-load {
-      background: rgba(0, 255, 102, 0.1);
-      border: 1px solid var(--neon-green);
-      color: var(--neon-green);
-    }
-
-    .btn-format {
+    .btn-paste {
       background: rgba(255, 204, 0, 0.1);
       border: 1px solid var(--neon-yellow);
       color: var(--neon-yellow);
@@ -414,6 +407,12 @@
       background: rgba(255, 0, 85, 0.1);
       border: 1px solid var(--neon-magenta);
       color: var(--neon-magenta);
+    }
+
+    .btn-load {
+      background: rgba(0, 255, 102, 0.1);
+      border: 1px solid var(--neon-green);
+      color: var(--neon-green);
     }
 
     .dropdown-container {
@@ -591,10 +590,10 @@
   </div>
 
   <div class="action-bar">
-    <button class="btn btn-secondary" onclick="clearCode()">&#128465; BORRAR</button>
     <button class="btn btn-copy" onclick="copyCode()">📋 COPIAR</button>
+    <button class="btn btn-paste" onclick="pasteCode()">📌 PEGAR</button>
+    <button class="btn btn-secondary" onclick="clearCode()">&#128465; BORRAR</button>
     <button class="btn btn-load" onclick="triggerFileSelect()">📂 CARGAR</button>
-    <button class="btn btn-format" onclick="formatCode()">⚡ FORMATEAR</button>
     
     <div class="dropdown-container">
       <button class="btn btn-primary" onclick="toggleDownloadMenu()">
@@ -677,7 +676,7 @@
     updatePreview();
 
     let saveTimeout;
-    let isInternalUpdate = false; // Bandera para evitar bucles infinitos de sincronización
+    let isInternalUpdate = false;
 
     editor.on('change', () => {
       if (isInternalUpdate) return;
@@ -762,7 +761,7 @@
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(code).then(() => {
-          notifyCopied();
+          notifyStatus('¡COPIADO!', 'formatted');
         }).catch(() => {
           fallbackCopyText(code);
         });
@@ -781,16 +780,41 @@
       textArea.select();
       try {
         document.execCommand('copy');
-        notifyCopied();
+        notifyStatus('¡COPIADO!', 'formatted');
       } catch (err) {
         alert('No se pudo copiar automáticamente.');
       }
       document.body.removeChild(textArea);
     }
 
-    function notifyCopied() {
-      statusTag.textContent = '¡COPIADO!';
-      statusTag.className = 'status-tag formatted';
+    function pasteCode() {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        navigator.clipboard.readText().then((text) => {
+          if (text) {
+            editor.setValue(text);
+            updatePreview();
+            notifyStatus('¡PEGADO!', 'loaded');
+          }
+        }).catch(() => {
+          fallbackPaste();
+        });
+      } else {
+        fallbackPaste();
+      }
+    }
+
+    function fallbackPaste() {
+      const text = prompt('Pega tu código aquí (Ctrl+V o Cmd+V):');
+      if (text !== null) {
+        editor.setValue(text);
+        updatePreview();
+        notifyStatus('¡PEGADO!', 'loaded');
+      }
+    }
+
+    function notifyStatus(msg, className) {
+      statusTag.textContent = msg;
+      statusTag.className = `status-tag ${className}`;
       setTimeout(() => {
         statusTag.textContent = 'SYS::READY';
         statusTag.className = 'status-tag';
@@ -815,13 +839,7 @@
       editor.setValue(formatted);
       editor.scrollTo(scrollInfo.left, scrollInfo.top);
 
-      statusTag.textContent = 'FORMATEADO';
-      statusTag.className = 'status-tag formatted';
-      
-      setTimeout(() => {
-        statusTag.textContent = 'SYS::READY';
-        statusTag.className = 'status-tag';
-      }, 1500);
+      notifyStatus('FORMATEADO', 'formatted');
     }
 
     let isUpdatingPreview = false;
@@ -845,12 +863,10 @@
       iframeDoc.write(code);
       iframeDoc.close();
 
-      // Habilitar edición visual en el documento del iframe tras cargar
       setTimeout(() => {
         if (iframeDoc.body) {
           iframeDoc.body.contentEditable = "true";
           
-          // Escuchar cambios hechos en vivo sobre el diseño visual
           iframeDoc.body.oninput = () => {
             syncVisualToCode(iframeDoc);
           };
@@ -866,7 +882,6 @@
       isInternalUpdate = true;
       const clone = iframeDoc.documentElement.cloneNode(true);
       
-      // Remover atributos contenteditable temporales antes de pasarlo al código fuente
       clone.removeAttribute('contenteditable');
       if (clone.querySelector('body')) {
         clone.querySelector('body').removeAttribute('contenteditable');
