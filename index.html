@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TryIt Editor & Visual Studio</title>
+  <title>HTML App</title>
   
   <!-- CodeMirror 5 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
@@ -14,7 +14,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
 
-  <!-- JS Beautify para sincronización visual limpia -->
+  <!-- JS Beautify -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-html.min.js"></script>
 
@@ -54,7 +54,7 @@
       flex-direction: column;
     }
 
-    /* HEADER STYLE W3SCHOOLS TRYIT */
+    /* HEADER */
     header {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border-glow);
@@ -172,7 +172,7 @@
       border-bottom: 2px solid var(--neon-cyan);
     }
 
-    /* ÁREA DE TRABAJO SPLIT */
+    /* ÁREA DE TRABAJO */
     .workspace {
       flex: 1;
       position: relative;
@@ -210,7 +210,7 @@
       font-size: 0.85rem;
     }
 
-    /* BARRA DE HERRAMIENTAS DREAMWEAVER (VISUAL) */
+    /* BARRA EDICIÓN VISUAL */
     .wysiwyg-bar {
       background: #121824;
       border-bottom: 1px solid var(--border-glow);
@@ -227,9 +227,10 @@
       font-size: 0.65rem;
       color: var(--neon-cyan);
       font-weight: bold;
-      margin-right: 4px;
+      margin-right: 2px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
 
     .wy-btn {
@@ -255,6 +256,14 @@
       border-radius: 3px;
     }
 
+    .wy-divider {
+      width: 1px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+
     .preview-wrapper {
       display: flex;
       flex-direction: column;
@@ -271,7 +280,7 @@
       background: #ffffff;
     }
 
-    /* BARRA DE ACCIONES INFERIOR */
+    /* BARRA DE ACCIONES */
     .action-bar {
       padding: 8px 10px;
       background: var(--bg-panel);
@@ -333,7 +342,7 @@
     }
     .dropdown-item:hover { background: rgba(0, 243, 255, 0.15); color: var(--neon-cyan); }
 
-    /* MODO ESCRITORIO (PANEL DIVIDIDO TRYIT) */
+    /* LAYOUT ADAPTATIVO */
     body.mode-desktop .tabs { display: none !important; }
     body.mode-desktop .workspace { flex-direction: row !important; }
     body.mode-desktop .panel { position: relative !important; display: flex !important; flex: 1 !important; width: 50% !important; }
@@ -355,11 +364,12 @@
 <body class="mode-desktop">
 
   <input type="file" id="file-input" accept=".html,.htm,.txt" style="display: none;" onchange="handleFileUpload(event)">
+  <input type="file" id="img-input" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
 
   <header>
     <div class="brand">
       <div class="brand-logo"></div>
-      <div class="brand-title">TRYIT <span>STUDIO</span></div>
+      <div class="brand-title">HTML <span>APP</span></div>
     </div>
     
     <div class="header-controls">
@@ -387,14 +397,36 @@
       </div>
     </div>
 
-    <!-- PANEL DERECHO: VISTA PREVIA Y EDICIÓN VISUAL (DREAMWEAVER) -->
+    <!-- PANEL DERECHO: VISTA PREVIA Y EDICIÓN VISUAL -->
     <div id="panel-preview" class="panel active">
       <div class="preview-wrapper">
         <div class="wysiwyg-bar">
-          <span class="wy-label">Visual:</span>
-          <button class="wy-btn" onclick="execWysiwyg('bold')"><b>B</b></button>
-          <button class="wy-btn" onclick="execWysiwyg('italic')"><i>I</i></button>
-          <button class="wy-btn" onclick="execWysiwyg('underline')"><u>U</u></button>
+          <span class="wy-label">Texto:</span>
+          <select class="wy-select" onchange="execWysiwygArgs('fontName', this.value); this.selectedIndex=0;" title="Fuente">
+            <option value="" disabled selected>Fuente</option>
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Times New Roman">Times New Roman</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Impact">Impact</option>
+          </select>
+
+          <select class="wy-select" onchange="execWysiwygArgs('fontSize', this.value); this.selectedIndex=0;" title="Tamaño de Letra">
+            <option value="" disabled selected>Tamaño</option>
+            <option value="1">1 (Muy pequeña)</option>
+            <option value="2">2 (Pequeña)</option>
+            <option value="3">3 (Normal)</option>
+            <option value="4">4 (Mediana)</option>
+            <option value="5">5 (Grande)</option>
+            <option value="6">6 (Muy grande)</option>
+            <option value="7">7 (Enorme)</option>
+          </select>
+
+          <button class="wy-btn" onclick="execWysiwyg('bold')" title="Negrita"><b>B</b></button>
+          <button class="wy-btn" onclick="execWysiwyg('italic')" title="Cursiva"><i>I</i></button>
+          <button class="wy-btn" onclick="execWysiwyg('underline')" title="Subrayado"><u>U</u></button>
+          
           <select class="wy-select" onchange="execWysiwygArgs('formatBlock', this.value); this.selectedIndex=0;">
             <option value="" disabled selected>Encabezado</option>
             <option value="<h1>">Título H1</option>
@@ -402,17 +434,27 @@
             <option value="<h3>">Título H3</option>
             <option value="<p>">Párrafo Normal</option>
           </select>
+          
           <input type="color" style="width: 28px; height: 24px; border: none; background: transparent; cursor: pointer;" title="Color del Texto" onchange="execWysiwygArgs('foreColor', this.value)">
           <button class="wy-btn" onclick="execWysiwyg('justifyLeft')">⬅</button>
           <button class="wy-btn" onclick="execWysiwyg('justifyCenter')">↔</button>
           <button class="wy-btn" onclick="execWysiwyg('justifyRight')">➡</button>
+
+          <div class="wy-divider"></div>
+
+          <span class="wy-label">Imagen:</span>
+          <button class="wy-btn" onclick="insertImagePrompt()" title="Insertar Imagen vía URL">🖼️ URL</button>
+          <button class="wy-btn" onclick="triggerImageUpload()" title="Subir Imagen Local">📁 Subir</button>
+          <button class="wy-btn" onclick="resizeSelectedImage('50%')" title="Ancho 50%">50%</button>
+          <button class="wy-btn" onclick="resizeSelectedImage('100%')" title="Ancho 100%">100%</button>
+          <button class="wy-btn" onclick="promptImageSize()" title="Tamaño Personalizado">⚙️ px</button>
         </div>
         <iframe id="preview-output"></iframe>
       </div>
     </div>
   </div>
 
-  <!-- BARRA DE ACCIONES SOLICITADA -->
+  <!-- BARRA DE ACCIONES INFERIOR -->
   <div class="action-bar">
     <button class="btn btn-copy" onclick="copyCode()">📋 COPIAR</button>
     <button class="btn btn-paste" onclick="pasteCode()">📌 PEGAR</button>
@@ -438,14 +480,15 @@
     const previewOutput = document.getElementById('preview-output');
     const statusTag = document.getElementById('status-tag');
     const fileInput = document.getElementById('file-input');
-    const STORAGE_KEY = 'tryit_studio_code';
-    const MODE_KEY = 'tryit_studio_mode';
+    const imgInput = document.getElementById('img-input');
+    const STORAGE_KEY = 'html_app_code';
+    const MODE_KEY = 'html_app_mode';
 
     const initialTemplate = `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mi Página Web</title>
+  <title>HTML App Document</title>
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -462,17 +505,20 @@
     }
     h1 { color: #121824; margin-bottom: 10px; }
     p { line-height: 1.6; font-size: 1.1rem; }
+    img { max-width: 100%; height: auto; border-radius: 6px; margin: 10px 0; display: block; }
   </style>
 </head>
 <body>
   <div class="box">
-    <h1>Edición Directa Dreamweaver</h1>
-    <p>Haz clic directamente aquí en el área blanca y <b>comienza a escribir</b>. Todo lo que edites se actualizará en tiempo real en el código HTML de la izquierda.</p>
+    <h1>HTML App - Editor Interactivo</h1>
+    <p>Haz clic directamente aquí en la vista previa para <b>escribir o modificar texto</b>. Puedes cambiar el tipo de fuente, tamaño o formato desde la barra superior.</p>
+    <img src="https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&auto=format&fit=crop" alt="Cat" width="300">
   </div>
 </body>
 </html>`;
 
     const savedCode = localStorage.getItem(STORAGE_KEY) || initialTemplate;
+    let selectedImageElement = null;
 
     // Inicialización del Editor CodeMirror
     const editor = CodeMirror.fromTextArea(document.getElementById('code-input'), {
@@ -515,15 +561,24 @@
       iframeDoc.write(code);
       iframeDoc.close();
 
-      // Habilitar edición estilo Dreamweaver dentro del iframe
+      // Habilitar edición directa y manejo de imágenes dentro del iframe
       setTimeout(() => {
         try {
           if (iframeDoc.body) {
             iframeDoc.body.contentEditable = "true";
             
-            // Detectar cambios realizados en la vista visual
             iframeDoc.body.oninput = () => syncVisualToCode(iframeDoc);
             iframeDoc.body.onkeyup = () => syncVisualToCode(iframeDoc);
+
+            // Listener para selección e interactividad con imágenes
+            iframeDoc.addEventListener('click', (e) => {
+              if (e.target && e.target.tagName === 'IMG') {
+                selectedImageElement = e.target;
+                highlightImage(selectedImageElement, iframeDoc);
+              } else {
+                clearImageHighlight(iframeDoc);
+              }
+            });
           }
         } catch (e) {
           console.error("Error activando modo visual:", e);
@@ -536,21 +591,38 @@
       }
     }
 
-    // Sincroniza desde la vista visual (Dreamweaver) hacia el Editor
+    function highlightImage(img, iframeDoc) {
+      clearImageHighlight(iframeDoc);
+      img.style.outline = "3px solid #00f3ff";
+      img.style.cursor = "pointer";
+    }
+
+    function clearImageHighlight(iframeDoc) {
+      const imgs = iframeDoc.querySelectorAll('img');
+      imgs.forEach(i => i.style.outline = "none");
+    }
+
+    // Sincroniza desde la vista previa visual hacia el Editor
     function syncVisualToCode(iframeDoc) {
       isInternalSync = true;
       
       const clone = iframeDoc.documentElement.cloneNode(true);
       
-      // Limpiar atributo temporal contenteditable
       clone.removeAttribute('contenteditable');
       if (clone.querySelector('body')) {
         clone.querySelector('body').removeAttribute('contenteditable');
       }
 
+      // Limpiar estilos de resaltado temporal de las imágenes
+      const cloneImgs = clone.querySelectorAll('img');
+      cloneImgs.forEach(img => {
+        img.style.outline = '';
+        img.style.cursor = '';
+        if (!img.getAttribute('style')) img.removeAttribute('style');
+      });
+
       let updatedHTML = '<!DOCTYPE html>\n' + clone.outerHTML;
 
-      // Formatear código devuelto usando js-beautify
       if (typeof html_beautify === 'function') {
         updatedHTML = html_beautify(updatedHTML, { indent_size: 2, wrap_line_length: 0 });
       }
@@ -571,7 +643,7 @@
       }, 300);
     }
 
-    // Ejecutores WYSIWYG
+    // Comandos de formateo WYSIWYG
     function execWysiwyg(command) {
       const iframeWin = previewOutput.contentWindow;
       iframeWin.focus();
@@ -586,7 +658,58 @@
       syncVisualToCode(iframeWin.document);
     }
 
-    // Configuración de modo Móvil / Escritorio
+    // HERRAMIENTAS DE EDICIÓN DE IMÁGENES
+    function insertImagePrompt() {
+      const url = prompt('Introduce la URL de la imagen:');
+      if (url) {
+        execWysiwygArgs('insertImage', url);
+      }
+    }
+
+    function triggerImageUpload() {
+      imgInput.click();
+    }
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        execWysiwygArgs('insertImage', e.target.result);
+        imgInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function resizeSelectedImage(widthValue) {
+      const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
+      if (selectedImageElement) {
+        selectedImageElement.style.width = widthValue;
+        selectedImageElement.style.height = 'auto';
+        syncVisualToCode(iframeDoc);
+      } else {
+        alert('Haz clic primero sobre una imagen en la vista previa para seleccionarla.');
+      }
+    }
+
+    function promptImageSize() {
+      const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
+      if (selectedImageElement) {
+        const currentW = selectedImageElement.offsetWidth || 300;
+        const newWidth = prompt('Introduce el ancho en píxeles (ej: 250) o porcentaje (ej: 80%):', currentW);
+        if (newWidth) {
+          const formattedWidth = isNaN(newWidth) ? newWidth : `${newWidth}px`;
+          selectedImageElement.style.width = formattedWidth;
+          selectedImageElement.style.height = 'auto';
+          syncVisualToCode(iframeDoc);
+        }
+      } else {
+        alert('Haz clic primero sobre una imagen en la vista previa para seleccionarla.');
+      }
+    }
+
+    // Cambio de vista Móvil / Escritorio
     function setDeviceMode(mode) {
       document.body.classList.remove('mode-mobile', 'mode-desktop');
       document.getElementById('btn-mode-mobile').classList.remove('active');
@@ -620,7 +743,7 @@
       }
     }
 
-    // ACCIONES DE BOTONES INFERIORES: Copiar, Pegar, Borrar, Cargar, Descargar
+    // Funciones de la barra de acciones
     function copyCode() {
       const code = editor.getValue();
       if (!code) return;
@@ -725,7 +848,7 @@
       }, 1500);
     }
 
-    // Inicialización de la App
+    // Inicialización
     const savedMode = localStorage.getItem(MODE_KEY) || (window.innerWidth < 768 ? 'mobile' : 'desktop');
     setDeviceMode(savedMode);
     updatePreview();
