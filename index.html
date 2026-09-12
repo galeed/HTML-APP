@@ -466,20 +466,16 @@
         &#128190; DESCARGAR &#9662;
       </button>
       <div id="download-menu" class="dropdown-menu">
-  <button class="dropdown-item" onclick="downloadAs('html')">
-    <span>Archivo Web</span> <strong>.HTML</strong>
-  </button>
-  <button class="dropdown-item" onclick="downloadAs('txt')">
-    <span>Texto Plano</span> <strong>.TXT</strong>
-  </button>
-  <!-- Nuevo botón para PDF -->
-<button class="dropdown-item" onclick="downloadPDF()">
-  <span>Documento PDF</span> <strong>.PDF</strong>
-</button>
-
-</div>
-
-        
+        <button class="dropdown-item" onclick="downloadAs('html')">
+          <span>Archivo Web</span> <strong>.HTML</strong>
+        </button>
+        <button class="dropdown-item" onclick="downloadAs('txt')">
+          <span>Texto Plano</span> <strong>.TXT</strong>
+        </button>
+        <!-- Nuevo botón para PDF integrado -->
+        <button class="dropdown-item" onclick="downloadPDF()">
+          <span>Documento PDF</span> <strong>.PDF</strong>
+        </button>
       </div>
     </div>
   </div>
@@ -856,46 +852,41 @@
       }, 1500);
     }
 
-function downloadPDF() {
-  // Ocultamos el menú desplegable
-  document.getElementById('download-menu').classList.remove('show');
-  
-  // Mostramos el estado en la etiqueta superior
-  notify('GENERANDO PDF...');
+    // --- NUEVA FUNCIÓN PARA PDF INTEGRADA ---
+    function downloadPDF() {
+      // Ocultamos el menú desplegable
+      document.getElementById('download-menu').classList.remove('show');
+      
+      // Mostramos el estado en la etiqueta superior
+      notify('GENERANDO PDF...');
 
-  // En lugar de pelear con el iframe, tomamos el código en texto crudo directo de CodeMirror
-  const codigoHTML = editor.getValue();
+      // Tomamos el código en texto crudo directo de CodeMirror
+      const codigoHTML = editor.getValue();
 
-  // Configuramos el PDF
-  const opt = {
-    margin:       15, // Margen para que no quede pegado a la orilla
-    filename:     'mi_documento.pdf',
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true }, 
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
+      // Configuramos el PDF
+      const opt = {
+        margin:       15,
+        filename:     'documento_app.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true }, 
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
 
-  // Le pasamos el texto directamente a html2pdf
-  html2pdf().set(opt).from(codigoHTML).save().then(() => {
-    // Si todo sale bien, avisamos que está listo
-    notify('PDF LISTO');
-  }).catch(error => {
-    // Si algo falla, lo mostramos en la etiqueta de estado
-    console.error("Error al crear el PDF:", error);
-    notify('ERROR PDF');
-  });
-}
-
-}
+      // Le pasamos el texto directamente a html2pdf
+      html2pdf().set(opt).from(codigoHTML).save().then(() => {
+        // Si todo sale bien, avisamos que está listo
+        notify('PDF LISTO');
+      }).catch(error => {
+        // Si algo falla, lo mostramos en la etiqueta de estado
+        console.error("Error al crear el PDF:", error);
+        notify('ERROR PDF');
+      });
+    }
 
     // Inicialización
     const savedMode = localStorage.getItem(MODE_KEY) || (window.innerWidth < 768 ? 'mobile' : 'desktop');
     setDeviceMode(savedMode);
     updatePreview();
-    
-    
   </script>
-  
-
 </body>
 </html>
