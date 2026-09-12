@@ -30,12 +30,12 @@ jobs:
 
       - name: Inicializar y Compilar Proyecto Android
         run: |
-          npm install @capacitor/cli @capacitor/core @capacitor/android
- 
-          npx cap init "HTML App" "com.galeed.htmlapp" --web-dir .
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          mkdir www
+          cp index.html sw.js  www/
+          npx cap init "HTML App" "com.htmlapp.app" --web-dir www
           npx cap add android
-          cd android && ./gradlew assembleDebug
-
 
       - name: Preparar APK final
         run: |
@@ -52,3 +52,5 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
