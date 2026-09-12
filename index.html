@@ -20,11 +20,12 @@
 
   <!-- html2pdf.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
+  <!-- Google Fonts: Orbitron -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-dark: #0a0d14;
-      --bg-panel: #121824;
+      --bg-panel: rgba(18, 24, 36, 0.65);
       --neon-cyan: #00f3ff;
       --neon-green: #00ff66;
       --neon-yellow: #ffcc00;
@@ -358,7 +359,34 @@
       body:not(.mode-mobile) .workspace { flex-direction: row; }
       body:not(.mode-mobile) .panel { position: relative; display: flex !important; flex: 1; width: 50%; }
       body:not(.mode-mobile) .panel:first-child { border-right: 1px solid var(--border-glow); }
+
+      /* --- INTEGRACIÓN CYBERPUNK Y GLASSMORFISMO --- */
+    
+    /* Aplicar fuente Orbitron a títulos, botones y etiquetas */
+    .brand-title, .btn-run, .status-tag, .tab-btn, .wy-label, .btn, .dropdown-item strong {
+      font-family: 'Orbitron', sans-serif !important;
+      letter-spacing: 1px;
     }
+
+    /* Efecto de cristal translúcido para las barras y cabeceras */
+    header, .tabs, .wysiwyg-bar, .action-bar {
+      background: var(--bg-panel) !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px); /* Soporte para WebKit/Safari */
+    }
+
+    /* Desenfoque más intenso para el menú desplegable de descargas */
+    .dropdown-menu {
+      background: rgba(13, 18, 29, 0.75) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    
+    /* Pequeño ajuste para que el área de código tenga un fondo compatible con el cristal */
+    .workspace {
+      background: radial-gradient(circle at center, #1a2333 0%, var(--bg-dark) 100%);
+    }
+    
   </style>
 </head>
 <body class="mode-desktop">
