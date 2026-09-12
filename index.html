@@ -466,12 +466,19 @@
         &#128190; DESCARGAR &#9662;
       </button>
       <div id="download-menu" class="dropdown-menu">
-        <button class="dropdown-item" onclick="downloadAs('html')">
-          <span>Archivo Web</span> <strong>.HTML</strong>
-        </button>
-        <button class="dropdown-item" onclick="downloadAs('txt')">
-          <span>Texto Plano</span> <strong>.TXT</strong>
-        </button>
+  <button class="dropdown-item" onclick="downloadAs('html')">
+    <span>Archivo Web</span> <strong>.HTML</strong>
+  </button>
+  <button class="dropdown-item" onclick="downloadAs('txt')">
+    <span>Texto Plano</span> <strong>.TXT</strong>
+  </button>
+  <!-- Nuevo botón para PDF -->
+  <button class="dropdown-item" onclick="downloadPDF()">
+    <span>Documento PDF</span> <strong>.PDF</strong>
+  </button>
+</div>
+
+        
       </div>
     </div>
   </div>
