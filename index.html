@@ -855,6 +855,39 @@
       }, 1500);
     }
 
+function downloadPDF() {
+  // 1. Cerramos el menú desplegable al hacer clic
+  document.getElementById('download-menu').classList.remove('show');
+  
+  // 2. Usamos tu función existente para avisar que está trabajando en el proceso
+  notify('GENERANDO PDF...');
+
+  // 3. Obtenemos todo el contenido visualizado en el iframe
+  const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
+  
+  // Tomamos el elemento <html> completo del iframe para no perder los estilos de fondo ni la estructura
+  const element = iframeDoc.documentElement;
+
+  // 4. Configuramos las opciones de renderizado del PDF
+  const opt = {
+    margin:       15, // Margen de 15mm para que el texto no quede pegado al borde del papel
+    filename:     'documento_app.pdf', // Nombre del archivo a descargar
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true }, // scale: 2 mejora la resolución; useCORS permite cargar imágenes web
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  // 5. Ejecutamos la creación del PDF y lanzamos la descarga
+  html2pdf().set(opt).from(element).save().then(() => {
+    // Al terminar, enviamos otra notificación de éxito
+    notify('PDF LISTO');
+  }).catch(error => {
+    console.error("Error al generar el PDF:", error);
+    notify('ERROR PDF');
+  });
+}
+
+
     // Inicialización
     const savedMode = localStorage.getItem(MODE_KEY) || (window.innerWidth < 768 ? 'mobile' : 'desktop');
     setDeviceMode(savedMode);
