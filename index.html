@@ -885,15 +885,15 @@ function downloadPDF() {
     console.error("Error al generar el PDF:", error);
     notify('ERROR PDF');
   });
-
-
+}
 
     // Inicialización
     const savedMode = localStorage.getItem(MODE_KEY) || (window.innerWidth < 768 ? 'mobile' : 'desktop');
     setDeviceMode(savedMode);
     updatePreview();
+    }
   </script>
   
-  }
+
 </body>
 </html>
