@@ -31,8 +31,8 @@ jobs:
       - name: Inicializar y Compilar Proyecto Android
         run: |
           npm install @capacitor/cli @capacitor/core @capacitor/android
-          # Cambia "Mi App" y "com.miusuario.miapp" por el nombre y paquete de tu proyecto:
-          npx cap init "Mi App" "com.miusuario.miapp" --web-dir .
+          # Cambia "HTML App" y "com.galeed.htmlapp" por el nombre y paquete de tu proyecto:
+          npx cap init "HTML App" "com.miusuario.htmlapp" --web-dir .
           npx cap add android
           cd android && ./gradlew assembleDebug
 
