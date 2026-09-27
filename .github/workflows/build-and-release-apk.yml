@@ -34,19 +34,19 @@ jobs:
           npm install @capacitor/core @capacitor/cli @capacitor/android
           mkdir www
           cp index.html sw.js  www/
-          npx cap init "HTML App" "com.htmlapp.app" --web-dir www
+          npx cap init "Meow HTML App" "com.meowhtmlapp.app" --web-dir www
           npx cap add android
 
       - name: Preparar APK final
         run: |
           mkdir -p output
-          cp android/app/build/outputs/apk/debug/app-debug.apk output/htmlapp-v1.0.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk output/meowhtmlapp-v1.0.apk
 
 
       - name: Publicar APK en GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          files: output/htmlapp-v1.0.apk
+          files: output/meowhtmlapp-v1.0.apk
           name: "Nueva Versión APK (${{ github.ref_name }})"
           draft: false
           prerelease: false
