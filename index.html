@@ -215,12 +215,13 @@
       display: none; position: absolute; background: #0d121d; border: 1px solid var(--neon-cyan);
       box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); border-radius: 4px; overflow: hidden;
       flex-direction: column; z-index: 99999;
-      min-width: 170px;
+      min-width: 190px;
     }
     .dropdown-menu.show { display: flex; }
     
     #download-menu { bottom: calc(100% + 8px); right: 0; left: auto; top: auto; }
     #settings-menu { top: 115%; right: 0; left: auto; max-height: 75vh; overflow-y: auto; }
+    #snippets-menu { top: 115%; right: 0; left: auto; max-height: 75vh; overflow-y: auto; min-width: 220px; }
 
     .dropdown-section-title {
       font-size: 0.65rem; color: #aaa; padding: 6px 10px; background: rgba(0,0,0,0.5);
@@ -233,6 +234,45 @@
       display: flex; justify-content: space-between; align-items: center; gap: 8px; white-space: nowrap;
     }
     .dropdown-item:hover { background: rgba(0, 243, 255, 0.15); color: var(--neon-cyan); }
+
+    /* MODAL FLOTANTE */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(5px);
+      display: none; justify-content: center; align-items: center; z-index: 999999;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: #0d121d; border: 1px solid var(--neon-cyan); box-shadow: 0 0 25px rgba(0, 243, 255, 0.4);
+      width: 90%; max-width: 450px; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .modal-header {
+      background: rgba(0, 243, 255, 0.1); padding: 12px 15px; border-bottom: 1px solid var(--border-glow);
+      display: flex; justify-content: space-between; align-items: center; font-weight: 900; color: var(--neon-cyan); font-size: 0.9rem;
+    }
+    .modal-close { background: transparent; border: none; color: var(--text-main); font-size: 1.1rem; cursor: pointer; }
+    .modal-body { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+    .modal-label { font-size: 0.75rem; font-weight: bold; color: var(--text-dim); text-transform: uppercase; }
+    .modal-input {
+      background: #06080e; border: 1px solid var(--border-glow); color: var(--text-main);
+      padding: 8px 10px; border-radius: 4px; font-size: 0.85rem; width: 100%; outline: none;
+    }
+    .modal-input:focus { border-color: var(--neon-cyan); }
+    .modal-textarea {
+      background: #06080e; border: 1px solid var(--border-glow); color: var(--neon-cyan);
+      padding: 10px; border-radius: 4px; font-family: var(--font-code); font-size: 0.8rem;
+      width: 100%; height: 150px; resize: vertical; outline: none;
+    }
+    .modal-footer {
+      padding: 12px 15px; background: rgba(0,0,0,0.3); border-top: 1px solid var(--border-glow);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .modal-btn {
+      padding: 8px 14px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; cursor: pointer; border: none;
+    }
+    .modal-btn-cancel { background: rgba(255,255,255,0.1); color: #fff; }
+    .modal-btn-delete { background: rgba(255,0,85,0.2); border: 1px solid var(--neon-magenta); color: var(--neon-magenta); }
+    .modal-btn-save { background: var(--neon-cyan); color: #000; }
     
     /* LAYOUT ADAPTATIVO */
     body.mode-desktop .tabs { display: none !important; }
@@ -261,7 +301,7 @@
     body.skin-classic header, body.skin-classic .tabs, body.skin-classic .wysiwyg-bar, body.skin-classic .action-bar {
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     }
-    body.skin-classic .dropdown-menu { background: rgba(13, 18, 29, 0.95) !important; backdrop-filter: blur(16px); }
+    body.skin-classic .dropdown-menu, body.skin-classic .modal-box { background: rgba(13, 18, 29, 0.95) !important; backdrop-filter: blur(16px); }
     body.skin-classic .workspace { background: radial-gradient(circle at center, #1a2333 0%, var(--bg-dark) 100%); }
 
     /* --- TERMINAL GUI SKIN --- */
@@ -289,29 +329,28 @@
     }
 
     body.skin-terminal header, body.skin-terminal .tabs, body.skin-terminal .wysiwyg-bar,
-    body.skin-terminal .action-bar, body.skin-terminal .dropdown-menu {
-      background: #000000 !important; border: 1px solid var(--term-color) !important; border-top: none !important; border-left: none !important; border-right: none !important;
+    body.skin-terminal .action-bar, body.skin-terminal .dropdown-menu, body.skin-terminal .modal-box {
+      background: #000000 !important; border: 1px solid var(--term-color) !important;
     }
-    body.skin-terminal .dropdown-menu { border: 1px solid var(--term-color) !important; }
     body.skin-terminal .workspace { background: #000000 !important; }
     body.skin-terminal .panel:first-child { border-right: 1px solid var(--term-color) !important; }
     body.skin-terminal .brand-logo { background: var(--term-color) !important; transform: none !important; width: 12px; height: 12px; }
     body.skin-terminal .brand-title span { color: var(--term-color) !important; }
 
     body.skin-terminal .btn, body.skin-terminal .tab-btn, body.skin-terminal .wy-btn, 
-    body.skin-terminal .icon-mode-btn, body.skin-terminal .btn-run {
+    body.skin-terminal .icon-mode-btn, body.skin-terminal .btn-run, body.skin-terminal .modal-btn {
       background: #000000 !important; color: var(--term-color) !important; border: 1px solid var(--term-color) !important;
     }
     
     body.skin-terminal .btn:hover, body.skin-terminal .wy-btn:active, body.skin-terminal .tab-btn.active, 
-    body.skin-terminal .btn-run:active, body.skin-terminal .icon-mode-btn.active {
+    body.skin-terminal .btn-run:active, body.skin-terminal .icon-mode-btn.active, body.skin-terminal .modal-btn-save {
       background: var(--term-color) !important; color: #000000 !important;
     }
 
-    body.skin-terminal .dropdown-section-title { background: var(--term-color) !important; color: #000000 !important; }
+    body.skin-terminal .dropdown-section-title, body.skin-terminal .modal-header { background: var(--term-color) !important; color: #000000 !important; }
     body.skin-terminal .dropdown-item { color: var(--term-color) !important; border-bottom: 1px dashed var(--term-color) !important; }
     body.skin-terminal .dropdown-item:hover { background: var(--term-color) !important; color: #000000 !important; }
-    body.skin-terminal .wy-select { background: #000000 !important; border: 1px solid var(--term-color) !important; color: var(--term-color) !important; }
+    body.skin-terminal .wy-select, body.skin-terminal .modal-input, body.skin-terminal .modal-textarea { background: #000000 !important; border: 1px solid var(--term-color) !important; color: var(--term-color) !important; }
     body.skin-terminal .status-tag { border: 1px dashed var(--term-color) !important; color: var(--term-color) !important; }
 
     body.skin-terminal .editor-container { background: #000000 !important; }
@@ -319,10 +358,6 @@
     body.skin-terminal .CodeMirror-gutters { background: #000000 !important; border-right: 1px solid var(--term-color) !important; }
     body.skin-terminal .CodeMirror-linenumber { color: var(--term-color-dim) !important; }
     body.skin-terminal .CodeMirror-cursor { border-left: 2px solid var(--term-color) !important; }
-    
-    body.skin-terminal .cm-s-abbott span.cm-tag, body.skin-terminal .cm-s-abbott span.cm-attribute,
-    body.skin-terminal .cm-s-abbott span.cm-string, body.skin-terminal .cm-s-abbott span.cm-keyword,
-    body.skin-terminal .cm-s-abbott span.cm-def { color: var(--term-color) !important; }
   </style>
 </head>
 
@@ -330,6 +365,28 @@
 
   <input type="file" id="file-input" accept=".html,.htm,.txt" onchange="handleFileUpload(event)">
   <input type="file" id="img-input" accept="image/*" onchange="handleImageUpload(event)">
+
+  <!-- VENTANA MODAL PARA INSERTAR/EDITAR CÓDIGO -->
+  <div id="code-modal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span id="modal-title">Configurar Bloque de Código</span>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <span class="modal-label">Nombre del bloque:</span>
+        <input type="text" id="modal-name-input" class="modal-input" placeholder="Ej. Mi Estilo Principal">
+        
+        <span class="modal-label">Código:</span>
+        <textarea id="modal-code-textarea" class="modal-textarea" placeholder="Escribe tu código aquí..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button id="modal-delete-btn" class="modal-btn modal-btn-delete" style="display:none;" onclick="deleteCurrentSnippetModal()">Eliminar</button>
+        <button class="modal-btn modal-btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="modal-btn modal-btn-save" onclick="saveSnippetModal()">Guardar / Insertar</button>
+      </div>
+    </div>
+  </div>
 
   <header>
     <div class="header-left">
@@ -346,19 +403,31 @@
       <button id="btn-mode-mobile" class="icon-mode-btn" title="Modo Móvil" onclick="setDeviceMode('mobile')">📱</button>
       <button id="btn-mode-desktop" class="icon-mode-btn" title="Modo Escritorio" onclick="setDeviceMode('desktop')">🖥️</button>
       
+      <!-- BOTÓN DE CÓDIGOS INSERTADOS (⛓️‍💥) -->
+      <div class="dropdown-container settings-container" id="snippets-dropdown-container">
+        <button class="icon-mode-btn menu-btn" onclick="toggleSnippetsMenu()" title="Códigos Insertados">
+          ⛓️‍💥
+        </button>
+        <div id="snippets-menu" class="dropdown-menu">
+          <div class="dropdown-section-title">Códigos Guardados</div>
+          <div id="snippets-list-container">
+            <!-- Se llena dinámicamente -->
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTÓN DE CONFIGURACIÓN Y PLANTILLAS (☰) -->
       <div class="dropdown-container settings-container" id="settings-dropdown-container">
-        <button class="icon-mode-btn menu-btn" onclick="toggleSettingsMenu()" title="Configuración">
+        <button class="icon-mode-btn menu-btn" onclick="toggleSettingsMenu()" title="Configuración y Plantillas">
           &#9776;
         </button>
         <div id="settings-menu" class="dropdown-menu">
           
-          <!-- SECCIÓN: INSERTAR CÓDIGO ADICIONAL (BASADO EN TU IMAGEN) -->
           <div class="dropdown-section-title">Insertar Código</div>
-          <button class="dropdown-item" onclick="insertSnippet('html')"><span>📁 / HTML</span> <strong>&lt;...&gt;</strong></button>
-          <button class="dropdown-item" onclick="insertSnippet('css')"><span>🎨 * CSS</span> <strong>&lt;style&gt;</strong></button>
-          <button class="dropdown-item" onclick="insertSnippet('js')"><span>⚡ () JS</span> <strong>&lt;script&gt;</strong></button>
+          <button class="dropdown-item" onclick="openSnippetModal('html')"><span>📁 / HTML</span> <strong>&lt;...&gt;</strong></button>
+          <button class="dropdown-item" onclick="openSnippetModal('css')"><span>🎨 * CSS</span> <strong>&lt;style&gt;</strong></button>
+          <button class="dropdown-item" onclick="openSnippetModal('js')"><span>⚡ () JS</span> <strong>&lt;script&gt;</strong></button>
 
-          <!-- SECCIÓN: TEMA VISUAL -->
           <div class="dropdown-section-title">Tema Visual</div>
           <button class="dropdown-item" onclick="changeSkin('classic')"><span>🎨 HTML Classic</span></button>
           <button class="dropdown-item" onclick="changeSkin('terminal')"><span>📟 Terminal GUI</span></button>
@@ -456,9 +525,14 @@
     const imgInput = document.getElementById('img-input');
     
     const STORAGE_KEY = 'html_app_code';
+    const SNIPPETS_KEY = 'html_app_custom_snippets';
     const MODE_KEY = 'html_app_mode';
     const SKIN_KEY = 'html_app_skin';
     const TERM_COLOR_KEY = 'html_app_term_color';
+
+    // Sistema de almacenamiento de fragmentos insertados
+    let customSnippets = JSON.parse(localStorage.getItem(SNIPPETS_KEY) || '[]');
+    let currentEditingIndex = null; // null si es nuevo, número si se está editando
 
     const initialTemplate = `<!DOCTYPE html>
 <html lang="es">
@@ -621,24 +695,104 @@
     }
 
     function toggleSettingsMenu() {
+      document.getElementById('snippets-menu').classList.remove('show');
       document.getElementById('settings-menu').classList.toggle('show');
     }
 
-    // NUEVA FUNCIÓN: Insertar plantillas de código adicionales en el cursor o al final
-    function insertSnippet(type) {
+    function toggleSnippetsMenu() {
       document.getElementById('settings-menu').classList.remove('show');
-      let snippet = "";
-      if (type === 'html') {
-        snippet = '\n<div class="nueva-seccion">\n  <h2>Título de Sección</h2>\n  <p>Escribe tu contenido HTML aquí...</p>\n</div>\n';
-      } else if (type === 'css') {
-        snippet = '\n<style>\n  .nueva-seccion {\n    background: #eef2f7;\n    padding: 15px;\n    margin-top: 15px;\n    border-radius: 6px;\n    border-left: 4px solid #00f3ff;\n  }\n</style>\n';
-      } else if (type === 'js') {
-        snippet = '\n<script>\n  console.log("¡Código JS ejecutado correctamente!");\n<\/script>\n';
-      }
+      renderSnippetsList();
+      document.getElementById('snippets-menu').classList.toggle('show');
+    }
+
+    // GESTIÓN DE LA VENTANA MODAL Y BLOQUES DE CÓDIGO
+    function openSnippetModal(type, editIndex = null) {
+      document.getElementById('settings-menu').classList.remove('show');
+      document.getElementById('snippets-menu').classList.remove('show');
       
-      editor.replaceSelection(snippet);
-      updatePreview(true);
-      notify('INERTADO');
+      currentEditingIndex = editIndex;
+      const modal = document.getElementById('code-modal');
+      const titleEl = document.getElementById('modal-title');
+      const nameInput = document.getElementById('modal-name-input');
+      const codeTextarea = document.getElementById('modal-code-textarea');
+      const deleteBtn = document.getElementById('modal-delete-btn');
+
+      if (editIndex !== null) {
+        // Modo edición
+        const item = customSnippets[editIndex];
+        titleEl.textContent = "Editar Bloque de Código";
+        nameInput.value = item.name;
+        codeTextarea.value = item.code;
+        deleteBtn.style.display = "inline-block";
+      } else {
+        // Modo nuevo
+        deleteBtn.style.display = "none";
+        nameInput.value = type.toUpperCase() + " Bloque";
+        if (type === 'html') {
+          titleEl.textContent = "Insertar Código HTML";
+          codeTextarea.value = '<div class="mi-seccion">\n  <h3>Título</h3>\n  <p>Contenido HTML...</p>\n</div>';
+        } else if (type === 'css') {
+          titleEl.textContent = "Insertar Código CSS";
+          codeTextarea.value = '<style>\n  .mi-seccion {\n    padding: 15px;\n    background: #fff;\n    border-radius: 5px;\n  }\n</style>';
+        } else if (type === 'js') {
+          titleEl.textContent = "Insertar Código JS";
+          codeTextarea.value = '<script>\n  console.log("Script ejecutado correctamente");\n<\/script>';
+        }
+      }
+
+      modal.classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('code-modal').classList.remove('show');
+      currentEditingIndex = null;
+    }
+
+    function saveSnippetModal() {
+      const name = document.getElementById('modal-name-input').value.trim() || "Sin Título";
+      const code = document.getElementById('modal-code-textarea').value;
+
+      if (currentEditingIndex !== null) {
+        // Actualizar existente
+        customSnippets[currentEditingIndex] = { name, code };
+        notify('ACTUALIZADO');
+      } else {
+        // Crear nuevo e insertarlo en el editor
+        customSnippets.push({ name, code });
+        editor.replaceSelection('\n' + code + '\n');
+        updatePreview(true);
+        notify('INSERTADO');
+      }
+
+      localStorage.setItem(SNIPPETS_KEY, JSON.stringify(customSnippets));
+      closeModal();
+    }
+
+    function deleteCurrentSnippetModal() {
+      if (currentEditingIndex !== null && confirm('¿Estás seguro de eliminar este código guardado?')) {
+        customSnippets.splice(currentEditingIndex, 1);
+        localStorage.setItem(SNIPPETS_KEY, JSON.stringify(customSnippets));
+        closeModal();
+        notify('ELIMINADO');
+      }
+    }
+
+    function renderSnippetsList() {
+      const container = document.getElementById('snippets-list-container');
+      container.innerHTML = "";
+      
+      if (customSnippets.length === 0) {
+        container.innerHTML = '<div class="dropdown-item" style="color:var(--text-dim); justify-content:center;">No hay códigos guardados</div>';
+        return;
+      }
+
+      customSnippets.forEach((item, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'dropdown-item';
+        btn.innerHTML = `<span>📄 ${item.name}</span> <strong>[Editar]</strong>`;
+        btn.onclick = () => openSnippetModal(null, index);
+        container.appendChild(btn);
+      });
     }
 
     function changeSkin(skinType) {
@@ -708,6 +862,10 @@
       const settingsContainer = document.getElementById('settings-dropdown-container');
       const settingsMenu = document.getElementById('settings-menu');
       if (settingsContainer && settingsMenu && !settingsContainer.contains(e.target)) settingsMenu.classList.remove('show');
+
+      const snippetsContainer = document.getElementById('snippets-dropdown-container');
+      const snippetsMenu = document.getElementById('snippets-menu');
+      if (snippetsContainer && snippetsMenu && !snippetsContainer.contains(e.target)) snippetsMenu.classList.remove('show');
     });
 
     function downloadAs(format) {
