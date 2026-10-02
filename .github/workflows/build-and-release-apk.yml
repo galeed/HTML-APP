@@ -1,49 +1,88 @@
-name: Compilar APK con Capacitor
+name: Build Android APK (Capacitor)
 
 on:
   push:
     branches:
       - main
+      - master
+  workflow_dispatch:
 
 jobs:
-  build-android:
-    name: Construir APK de Android
+  build:
+    name: Compilar APK Android
     runs-on: ubuntu-latest
 
     steps:
-      - name: Descargar el código del repositorio
+      # 1. Obtener el código fuente
+      - name: Checkout del código
         uses: actions/checkout@v4
 
+      # 2. Configurar Node.js
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
 
-      - name: Instalar dependencias web
-        run: npm install
-
-      - name: Construir la aplicación web
-        run: npm run build
-
-      - name: Configurar Java (JDK)
+      # 3. Configurar Java JDK 21
+      - name: Configurar Java JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Sincronizar Capacitor con Android
-        run: npx cap sync android
+      # 4. Aceptar licencias Android
+      - name: Aceptar licencias Android
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Dar permisos de ejecución a Gradle
-        working-directory: ./android
-        run: chmod +x ./gradlew
+      # 5. Instalar dependencias de Capacitor
+      - name: Instalar dependencias de Capacitor
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Compilar el APK (Modo Debug)
-        working-directory: ./android
-        run: ./gradlew assembleDebug
+                  # 6. Inicializar y sincronizar Capacitor
+      - name: Inicializar Capacitor y Agregar Plataforma Android
+        run: |
+          mkdir -p dist
+          cp index.html manifest.json dist/ 2>/dev/null || cp index.html dist/
+          npx cap init "Meow HTML App" "com.meowhtml.app" --web-dir dist
+          npx cap add android
+          npx cap copy android
+          npx cap sync android
 
-      - name: Subir el APK a GitHub
+
+
+      # 7. Corregir duplicidad de clases Kotlin
+      - name: Resolver conflictos de dependencias de Kotlin
+        run: |
+          cat << 'EOF' >> android/build.gradle
+
+          subprojects {
+              configurations.all {
+                  resolutionStrategy {
+                      dependencySubstitution {
+                          substitute module('org.jetbrains.kotlin:kotlin-stdlib-jdk7') using module('org.jetbrains.kotlin:kotlin-stdlib:1.8.22')
+                          substitute module('org.jetbrains.kotlin:kotlin-stdlib-jdk8') using module('org.jetbrains.kotlin:kotlin-stdlib:1.8.22')
+                      }
+                  }
+              }
+          }
+          EOF
+
+      # 8. Permisos de Gradle
+      - name: Permisos Gradle
+        run: chmod +x android/gradlew
+
+      # 9. Compilar APK
+      - name: Compilar APK con Gradle
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon -Pandroid.builder.sdkDownload=true
+
+      # 10. Subir la APK generada como artefacto
+      - name: Subir APK como Artefacto
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: meow-app-debug.apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
