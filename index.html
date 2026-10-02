@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <title>Meow HTML App</title>
-  
+
   <!-- CodeMirror 5 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/abbott.min.css">
@@ -22,6 +23,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <!-- Google Fonts: Orbitron -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  
   <style>
     :root {
       --bg-dark: #0a0d14;
@@ -35,27 +37,35 @@
       --border-glow: rgba(0, 243, 255, 0.25);
       --font-code: 'Courier New', Courier, monospace;
     }
-
+    
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
       -webkit-tap-highlight-color: transparent;
     }
-
+    
     html, body {
       width: 100vw;
       height: 100dvh;
-      overflow: hidden;
+      min-height: -webkit-fill-available;
+      overflow: hidden !important;
       position: fixed;
+      top: 0; left: 0;
       background-color: var(--bg-dark);
       color: var(--text-main);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       display: flex;
       flex-direction: column;
+      overscroll-behavior: none;
     }
 
-    /* HEADER */
+    textarea#code-input, input[type="file"] {
+      display: none !important;
+      position: absolute; top: -9999px; opacity: 0; z-index: -10;
+    }
+    
+    /* HEADER (CORREGIDO PARA QUE NO SE MUEVA Y PERMITA MENÚS DESPLEGABLES) */
     header {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border-glow);
@@ -63,352 +73,281 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      z-index: 10;
+      z-index: 50; /* Z-index alto para que el menú no quede oculto */
       flex-shrink: 0;
+      /* Se eliminó overflow-x: auto para que no se mueva horizontalmente */
+      overflow: visible;
+      gap: 10px;
     }
-
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap; /* Permite ajuste en pantallas muy pequeñas sin scroll */
+    }
+    
     .brand {
       display: flex;
       align-items: center;
       gap: 8px;
     }
-
+    
     .brand-logo {
-      width: 12px;
-      height: 12px;
+      width: 12px; height: 12px;
       background: var(--neon-cyan);
       box-shadow: 0 0 8px var(--neon-cyan);
       transform: rotate(45deg);
     }
-
+    
     .brand-title {
-      font-size: 0.95rem;
-      font-weight: 900;
-      letter-spacing: 1px;
-      color: #fff;
+      font-size: 0.95rem; font-weight: 900; letter-spacing: 1px; color: #fff; white-space: nowrap;
     }
-
     .brand-title span { color: var(--neon-cyan); }
+    
+    .btn-run {
+      background: var(--neon-green); color: #000; border: none; padding: 6px 12px;
+      font-weight: 900; font-size: 0.8rem; border-radius: 4px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; box-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+      white-space: nowrap;
+    }
+    .btn-run:active { transform: scale(0.96); }
 
+    .status-tag {
+      font-size: 0.65rem; padding: 3px 6px; border: 1px solid var(--neon-green);
+      color: var(--neon-green); border-radius: 3px; font-weight: bold; white-space: nowrap;
+    }
+    
     .header-controls {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      /* Orden invertido visualmente en HTML para reflejar tu petición */
     }
-
-    .btn-run {
-      background: var(--neon-green);
-      color: #000;
-      border: none;
-      padding: 6px 16px;
-      font-weight: 900;
-      font-size: 0.8rem;
-      border-radius: 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
-      transition: all 0.2s;
-    }
-
-    .btn-run:active { transform: scale(0.96); }
-
-    .view-mode-selector {
-      display: flex;
-      gap: 2px;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 2px;
-      border-radius: 4px;
-      border: 1px solid var(--border-glow);
-    }
-
+    
     .icon-mode-btn {
-      background: transparent;
-      border: none;
-      font-size: 1rem;
-      padding: 4px 6px;
-      cursor: pointer;
-      border-radius: 3px;
-      opacity: 0.5;
+      background: transparent; border: none; font-size: 1.1rem; padding: 4px 6px;
+      cursor: pointer; border-radius: 3px; opacity: 0.5; display: flex; align-items: center; justify-content: center;
     }
-
-    .icon-mode-btn.active {
-      opacity: 1;
-      background: rgba(0, 243, 255, 0.2);
-    }
-
-    .status-tag {
-      font-size: 0.65rem;
-      padding: 3px 6px;
-      border: 1px solid var(--neon-green);
-      color: var(--neon-green);
-      border-radius: 3px;
-      text-transform: uppercase;
-      font-weight: bold;
+    .icon-mode-btn.active { opacity: 1; background: rgba(0, 243, 255, 0.2); }
+    .icon-mode-btn:active { transform: scale(0.90); }
+    
+    .menu-btn {
+      opacity: 1 !important; color: var(--text-main); border: 1px solid var(--border-glow);
+      background: rgba(0, 0, 0, 0.5); padding: 4px 8px;
     }
 
     /* PESTAÑAS MÓVILES */
     .tabs {
-      display: flex;
-      background: #06080e;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-      flex-shrink: 0;
+      display: flex; background: #06080e; border-bottom: 1px solid rgba(255, 255, 255, 0.05); flex-shrink: 0;
     }
-
     .tab-btn {
-      flex: 1;
-      padding: 10px;
-      background: transparent;
-      border: none;
-      color: var(--text-dim);
-      font-weight: 700;
-      font-size: 0.8rem;
-      cursor: pointer;
+      flex: 1; padding: 10px; background: transparent; border: none; color: var(--text-dim);
+      font-weight: 700; font-size: 0.8rem; cursor: pointer;
     }
-
-    .tab-btn.active {
-      color: var(--neon-cyan);
-      background: rgba(0, 243, 255, 0.05);
-      border-bottom: 2px solid var(--neon-cyan);
-    }
-
+    .tab-btn.active { color: var(--neon-cyan); background: rgba(0, 243, 255, 0.05); border-bottom: 2px solid var(--neon-cyan); }
+    
     /* ÁREA DE TRABAJO */
-    .workspace {
-      flex: 1;
-      position: relative;
-      display: flex;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-
-    .panel {
-      width: 100%;
-      height: 100%;
-      display: none;
-      flex-direction: column;
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-    }
-
+    .workspace { flex: 1; position: relative; display: flex; width: 100%; height: 100%; overflow: hidden; }
+    .panel { width: 100%; height: 100%; display: none; flex-direction: column; position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
     .panel.active { display: flex; }
-
+    
     /* EDITOR */
-    .editor-container {
-      position: relative;
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      background: #080a10;
-    }
-
-    .CodeMirror {
-      width: 100% !important;
-      height: 100% !important;
-      position: absolute !important;
-      font-family: var(--font-code);
-      font-size: 0.85rem;
-    }
-
+    .editor-container { position: relative; flex: 1; width: 100%; height: 100%; background: #080a10; overflow: hidden; }
+    .CodeMirror { width: 100% !important; height: 100% !important; position: absolute !important; top: 0; left: 0; bottom: 0; right: 0; font-family: var(--font-code); font-size: 0.85rem; }
+    
     /* BARRA EDICIÓN VISUAL */
     .wysiwyg-bar {
-      background: #121824;
-      border-bottom: 1px solid var(--border-glow);
-      padding: 6px 10px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      background: #121824; border-bottom: 1px solid var(--border-glow); padding: 6px 10px;
+      display: flex; align-items: center; gap: 6px; flex-shrink: 0; overflow-x: auto; scrollbar-width: none;
     }
-
-    .wy-label {
-      font-size: 0.65rem;
-      color: var(--neon-cyan);
-      font-weight: bold;
-      margin-right: 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      white-space: nowrap;
-    }
-
-    .wy-btn {
-      background: rgba(0, 243, 255, 0.1);
-      border: 1px solid var(--border-glow);
-      color: #fff;
-      padding: 4px 8px;
-      font-size: 0.75rem;
-      font-weight: bold;
-      border-radius: 3px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
+    .wysiwyg-bar::-webkit-scrollbar { display: none; }
+    
+    .wy-label { font-size: 0.65rem; color: var(--neon-cyan); font-weight: bold; text-transform: uppercase; }
+    .wy-btn { background: rgba(0, 243, 255, 0.1); border: 1px solid var(--border-glow); color: #fff; padding: 4px 8px; font-size: 0.75rem; font-weight: bold; border-radius: 3px; cursor: pointer; white-space: nowrap; }
     .wy-btn:active { background: var(--neon-cyan); color: #000; }
-
-    .wy-select {
-      background: #0a0d14;
-      border: 1px solid var(--border-glow);
-      color: var(--text-main);
-      padding: 4px;
-      font-size: 0.75rem;
-      border-radius: 3px;
-    }
-
-    .wy-divider {
-      width: 1px;
-      height: 18px;
-      background: rgba(255, 255, 255, 0.15);
-      margin: 0 4px;
-      flex-shrink: 0;
-    }
-
-    .preview-wrapper {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      height: 100%;
-      background: #ffffff;
-    }
-
-    iframe#preview-output {
-      width: 100%;
-      height: 100%;
-      border: none;
-      flex: 1;
-      background: #ffffff;
-    }
-
-    /* BARRA DE ACCIONES */
+    .wy-select { background: #0a0d14; border: 1px solid var(--border-glow); color: var(--text-main); padding: 4px; font-size: 0.75rem; border-radius: 3px; }
+    .wy-divider { width: 1px; height: 18px; background: rgba(255, 255, 255, 0.15); margin: 0 4px; }
+    
+    .preview-wrapper { display: flex; flex-direction: column; width: 100%; height: 100%; background: #ffffff; overflow: hidden; }
+    iframe#preview-output { width: 100%; height: 100%; border: none; flex: 1; background: #ffffff; }
+    
+    /* BARRA DE ACCIONES INFERIOR */
     .action-bar {
-      padding: 8px 10px;
-      background: var(--bg-panel);
-      border-top: 1px solid var(--border-glow);
-      display: flex;
-      gap: 6px;
-      z-index: 10;
-      flex-shrink: 0;
+      padding: 8px 10px; background: var(--bg-panel); border-top: 1px solid var(--border-glow);
+      display: flex; gap: 6px; z-index: 10; flex-shrink: 0; overflow-x: auto; scrollbar-width: none;
+      padding-bottom: env(safe-area-inset-bottom, 8px);
     }
-
-    .btn {
-      flex: 1;
-      padding: 10px 2px;
-      border: none;
-      border-radius: 4px;
-      font-weight: 800;
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-    }
-
+    .action-bar::-webkit-scrollbar { display: none; }
+    
+    .btn { flex: 1; min-width: 80px; padding: 10px 2px; border: none; border-radius: 4px; font-weight: 800; font-size: 0.68rem; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
     .btn-copy { background: rgba(0, 243, 255, 0.12); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); }
     .btn-paste { background: rgba(255, 204, 0, 0.12); border: 1px solid var(--neon-yellow); color: var(--neon-yellow); }
     .btn-clear { background: rgba(255, 0, 85, 0.12); border: 1px solid var(--neon-magenta); color: var(--neon-magenta); }
     .btn-load { background: rgba(0, 255, 102, 0.12); border: 1px solid var(--neon-green); color: var(--neon-green); }
     .btn-format {background: rgba(180, 0, 255, 0.12); border: 1px solid #b000ff;color: #d166ff; }
     .btn-primary { background: linear-gradient(135deg, var(--neon-cyan), #0088ff); color: #000; font-weight: 900; }
+    
+    /* ESTILOS DE DROPDOWNS CORREGIDOS */
+    .dropdown-container { position: relative; display: flex; flex: 1; min-width: 100px; align-items: center; }
+    .dropdown-container.settings-container { flex: none; min-width: auto; }
 
-    .dropdown-container { position: relative; flex: 1; display: flex; }
     .dropdown-menu {
-      display: none;
-      position: absolute;
-      bottom: 115%;
-      right: 0; left: 0;
-      background: #0d121d;
-      border: 1px solid var(--neon-cyan);
-      box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
-      border-radius: 4px;
-      overflow: hidden;
-      flex-direction: column;
-      z-index: 20;
+      display: none; position: absolute; background: #0d121d; border: 1px solid var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); border-radius: 4px; overflow: hidden;
+      flex-direction: column; z-index: 9999; /* Alto z-index para sobreponerse al editor */
+      min-width: 150px;
     }
     .dropdown-menu.show { display: flex; }
+    
+    #download-menu { bottom: 115%; right: 0; left: 0; }
+    #settings-menu { top: 115%; right: 0; left: auto; max-height: 70vh; overflow-y: auto; }
+
+    .dropdown-section-title {
+      font-size: 0.65rem; color: #aaa; padding: 6px 10px; background: rgba(0,0,0,0.5);
+      border-bottom: 1px solid rgba(255,255,255,0.1); text-transform: uppercase; font-weight: bold;
+    }
+
     .dropdown-item {
-      padding: 10px;
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      color: var(--text-main);
-      font-size: 0.75rem;
-      font-weight: bold;
-      text-align: left;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
+      padding: 10px; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.05);
+      color: var(--text-main); font-size: 0.75rem; font-weight: bold; text-align: left; cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center; gap: 8px; white-space: nowrap;
     }
     .dropdown-item:hover { background: rgba(0, 243, 255, 0.15); color: var(--neon-cyan); }
-
+    
     /* LAYOUT ADAPTATIVO */
     body.mode-desktop .tabs { display: none !important; }
     body.mode-desktop .workspace { flex-direction: row !important; }
     body.mode-desktop .panel { position: relative !important; display: flex !important; flex: 1 !important; width: 50% !important; }
     body.mode-desktop .panel:first-child { border-right: 1px solid var(--border-glow); }
-
+    
     body.mode-mobile .tabs { display: flex !important; }
     body.mode-mobile .workspace { flex-direction: column !important; }
-    body.mode-mobile .panel { position: absolute !important; display: none; width: 100% !important; }
+    body.mode-mobile .panel { position: absolute !important; display: none; width: 100% !important; height: 100% !important; }
     body.mode-mobile .panel.active { display: flex !important; }
-
+    
     @media (min-width: 768px) {
       body:not(.mode-mobile) .tabs { display: none; }
       body:not(.mode-mobile) .workspace { flex-direction: row; }
-      body:not(.mode-mobile) .panel { position: relative; display: flex !important; flex: 1; width: 50%; }
+      body:not(.mode-mobile) .panel { position: relative; display: flex !important; flex: 1; width: 50%; height: 100%; }
       body:not(.mode-mobile) .panel:first-child { border-right: 1px solid var(--border-glow); }
-
-      /* --- INTEGRACIÓN CYBERPUNK Y GLASSMORFISMO --- */
-    
-    /* Aplicar fuente Orbitron a títulos, botones y etiquetas */
-    .brand-title, .btn-run, .status-tag, .tab-btn, .wy-label, .btn, .dropdown-item strong {
-      font-family: 'Orbitron', sans-serif !important;
-      letter-spacing: 1px;
     }
 
-    /* Efecto de cristal translúcido para las barras y cabeceras */
-    header, .tabs, .wysiwyg-bar, .action-bar {
-      background: var(--bg-panel) !important;
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px); /* Soporte para WebKit/Safari */
+    /* --- HTML CLASSIC: INTEGRACIÓN CYBERPUNK Y GLASSMORFISMO --- */
+    body.skin-classic .brand-title, body.skin-classic .btn-run, body.skin-classic .status-tag, 
+    body.skin-classic .tab-btn, body.skin-classic .wy-label, body.skin-classic .btn, 
+    body.skin-classic .dropdown-item strong, body.skin-classic .dropdown-section-title {
+      font-family: 'Orbitron', sans-serif !important; letter-spacing: 1px;
+    }
+    body.skin-classic header, body.skin-classic .tabs, body.skin-classic .wysiwyg-bar, body.skin-classic .action-bar {
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    body.skin-classic .dropdown-menu { background: rgba(13, 18, 29, 0.95) !important; backdrop-filter: blur(16px); }
+    body.skin-classic .workspace { background: radial-gradient(circle at center, #1a2333 0%, var(--bg-dark) 100%); }
+
+    /* --- TERMINAL GUI SKIN --- */
+    body.skin-terminal {
+      --bg-dark: #000000; --bg-panel: #000000;
+      --neon-cyan: var(--term-color); --neon-green: var(--term-color);
+      --neon-yellow: var(--term-color); --neon-magenta: var(--term-color);
+      --text-main: var(--term-color); --text-dim: var(--term-color-dim);
+      --border-glow: var(--term-color); --font-code: 'Courier New', Courier, monospace;
+    }
+    
+    body.term-theme-green { --term-color: #00ff41; --term-color-dim: #008f11; }
+    body.term-theme-amber { --term-color: #ffb000; --term-color-dim: #b37b00; }
+    body.term-theme-cyan { --term-color: #00ffff; --term-color-dim: #008080; }
+    body.term-theme-dracula { --term-color: #bd93f9; --term-color-dim: #6272a4; }
+    body.term-theme-mono { --term-color: #ffffff; --term-color-dim: #888888; }
+    body.term-theme-cappuccino { --term-color: #d4b693; --term-color-dim: #8c7355; }
+    
+    /* Mostrar sección de colores de terminal solo en skin terminal */
+    #term-colors-section { display: none; }
+    body.skin-terminal #term-colors-section { display: block; }
+
+    body.skin-terminal, body.skin-terminal * {
+      border-radius: 0 !important; backdrop-filter: none !important; box-shadow: none !important;
+      text-shadow: none !important; font-family: var(--font-code) !important; letter-spacing: normal !important;
     }
 
-    /* Desenfoque más intenso para el menú desplegable de descargas */
-    .dropdown-menu {
-      background: rgba(13, 18, 29, 0.75) !important;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+    body.skin-terminal header, body.skin-terminal .tabs, body.skin-terminal .wysiwyg-bar,
+    body.skin-terminal .action-bar, body.skin-terminal .dropdown-menu {
+      background: #000000 !important; border: 1px solid var(--term-color) !important; border-top: none !important; border-left: none !important; border-right: none !important;
+    }
+    body.skin-terminal .dropdown-menu { border: 1px solid var(--term-color) !important; }
+    body.skin-terminal .workspace { background: #000000 !important; }
+    body.skin-terminal .panel:first-child { border-right: 1px solid var(--term-color) !important; }
+    body.skin-terminal .brand-logo { background: var(--term-color) !important; transform: none !important; width: 12px; height: 12px; }
+    body.skin-terminal .brand-title span { color: var(--term-color) !important; }
+
+    body.skin-terminal .btn, body.skin-terminal .tab-btn, body.skin-terminal .wy-btn, 
+    body.skin-terminal .icon-mode-btn, body.skin-terminal .btn-run {
+      background: #000000 !important; color: var(--term-color) !important; border: 1px solid var(--term-color) !important;
     }
     
-    /* Pequeño ajuste para que el área de código tenga un fondo compatible con el cristal */
-    .workspace {
-      background: radial-gradient(circle at center, #1a2333 0%, var(--bg-dark) 100%);
+    body.skin-terminal .btn:hover, body.skin-terminal .wy-btn:active, body.skin-terminal .tab-btn.active, 
+    body.skin-terminal .btn-run:active, body.skin-terminal .icon-mode-btn.active {
+      background: var(--term-color) !important; color: #000000 !important;
     }
+
+    body.skin-terminal .dropdown-section-title { background: var(--term-color) !important; color: #000000 !important; }
+    body.skin-terminal .dropdown-item { color: var(--term-color) !important; border-bottom: 1px dashed var(--term-color) !important; }
+    body.skin-terminal .dropdown-item:hover { background: var(--term-color) !important; color: #000000 !important; }
+    body.skin-terminal .wy-select { background: #000000 !important; border: 1px solid var(--term-color) !important; color: var(--term-color) !important; }
+    body.skin-terminal .status-tag { border: 1px dashed var(--term-color) !important; color: var(--term-color) !important; }
+
+    body.skin-terminal .editor-container { background: #000000 !important; }
+    body.skin-terminal .CodeMirror { background: #000000 !important; color: var(--term-color) !important; }
+    body.skin-terminal .CodeMirror-gutters { background: #000000 !important; border-right: 1px solid var(--term-color) !important; }
+    body.skin-terminal .CodeMirror-linenumber { color: var(--term-color-dim) !important; }
+    body.skin-terminal .CodeMirror-cursor { border-left: 2px solid var(--term-color) !important; }
     
+    body.skin-terminal .cm-s-abbott span.cm-tag, body.skin-terminal .cm-s-abbott span.cm-attribute,
+    body.skin-terminal .cm-s-abbott span.cm-string, body.skin-terminal .cm-s-abbott span.cm-keyword,
+    body.skin-terminal .cm-s-abbott span.cm-def { color: var(--term-color) !important; }
   </style>
 </head>
-<body class="mode-desktop">
 
-  <input type="file" id="file-input" accept=".html,.htm,.txt" style="display: none;" onchange="handleFileUpload(event)">
-  <input type="file" id="img-input" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+<body class="mode-desktop skin-classic term-theme-green">
+
+  <input type="file" id="file-input" accept=".html,.htm,.txt" onchange="handleFileUpload(event)">
+  <input type="file" id="img-input" accept="image/*" onchange="handleImageUpload(event)">
 
   <header>
-    <div class="brand">
-      <div class="brand-logo"></div>
-      <div class="brand-title">Meow HTML <span>APP</span></div>
-    </div>
-    
-    <div class="header-controls">
-      <button class="btn-run" onclick="updatePreview(true)" title="Ejecutar Código">
-        ▶ EJECUTAR
-      </button>
+    <div class="header-left">
+      <div class="brand">
+        <div class="brand-logo"></div>
+        <div class="brand-title">Meow HTML <span>APP</span></div>
+      </div>
+      <button class="btn-run" onclick="updatePreview(true)" title="Ejecutar Código">▶ EJECUTAR</button>
       <div id="status-tag" class="status-tag">LISTO</div>
-      <div class="view-mode-selector">
-        <button id="btn-mode-mobile" class="icon-mode-btn" title="Modo Móvil" onclick="setDeviceMode('mobile')">📱</button>
-        <button id="btn-mode-desktop" class="icon-mode-btn" title="Modo Escritorio" onclick="setDeviceMode('desktop')">🖥️</button>
+    </div>
+
+    <!-- Controles derechos: Móvil, Desktop, Menú (3 líneas) de derecha a izquierda -->
+    <div class="header-controls">
+      <button id="btn-mode-mobile" class="icon-mode-btn" title="Modo Móvil" onclick="setDeviceMode('mobile')">📱</button>
+      <button id="btn-mode-desktop" class="icon-mode-btn" title="Modo Escritorio" onclick="setDeviceMode('desktop')">🖥️</button>
+      
+      <div class="dropdown-container settings-container" id="settings-dropdown-container">
+        <button class="icon-mode-btn menu-btn" onclick="toggleSettingsMenu()" title="Configuración">
+          &#9776; <!-- Emoji 3 lineas (hamburguesa) -->
+        </button>
+        <div id="settings-menu" class="dropdown-menu">
+          <div class="dropdown-section-title">Tema Visual</div>
+          <button class="dropdown-item" onclick="changeSkin('classic')"><span>🎨 HTML Classic</span></button>
+          <button class="dropdown-item" onclick="changeSkin('terminal')"><span>📟 Terminal GUI</span></button>
+          
+          <!-- Submenú de colores, se muestra solo en modo terminal -->
+          <div id="term-colors-section">
+            <div class="dropdown-section-title">Color Terminal</div>
+            <button class="dropdown-item" onclick="changeTermColor('green')"><span>🟢 Phosphor Green</span></button>
+            <button class="dropdown-item" onclick="changeTermColor('amber')"><span>🟠 Amber CRT</span></button>
+            <button class="dropdown-item" onclick="changeTermColor('cyan')"><span>🔵 Cyber Cyan</span></button>
+            <button class="dropdown-item" onclick="changeTermColor('dracula')"><span>🟣 Dracula Synth</span></button>
+            <button class="dropdown-item" onclick="changeTermColor('mono')"><span>⚪ Monochrome</span></button>
+            <button class="dropdown-item" onclick="changeTermColor('cappuccino')"><span>☕ Cappuccino</span></button>
+          </div>
+        </div>
       </div>
     </div>
   </header>
@@ -419,19 +358,17 @@
   </div>
 
   <div class="workspace">
-    <!-- PANEL IZQUIERDO: EDITOR DE CÓDIGO -->
     <div id="panel-editor" class="panel active">
       <div class="editor-container">
         <textarea id="code-input"></textarea>
       </div>
     </div>
 
-    <!-- PANEL DERECHO: VISTA PREVIA Y EDICIÓN VISUAL -->
     <div id="panel-preview" class="panel active">
       <div class="preview-wrapper">
         <div class="wysiwyg-bar">
           <span class="wy-label">Texto:</span>
-          <select class="wy-select" onchange="execWysiwygArgs('fontName', this.value); this.selectedIndex=0;" title="Fuente">
+          <select class="wy-select" onchange="execWysiwygArgs('fontName', this.value); this.selectedIndex=0;">
             <option value="" disabled selected>Fuente</option>
             <option value="Arial">Arial</option>
             <option value="Verdana">Verdana</option>
@@ -440,72 +377,49 @@
             <option value="Georgia">Georgia</option>
             <option value="Impact">Impact</option>
           </select>
-
-          <select class="wy-select" onchange="execWysiwygArgs('fontSize', this.value); this.selectedIndex=0;" title="Tamaño de Letra">
+          <select class="wy-select" onchange="execWysiwygArgs('fontSize', this.value); this.selectedIndex=0;">
             <option value="" disabled selected>Tamaño</option>
-            <option value="1">1 (Muy pequeña)</option>
-            <option value="2">2 (Pequeña)</option>
+            <option value="1">1 (Pequeña)</option>
             <option value="3">3 (Normal)</option>
-            <option value="4">4 (Mediana)</option>
             <option value="5">5 (Grande)</option>
-            <option value="6">6 (Muy grande)</option>
             <option value="7">7 (Enorme)</option>
           </select>
-
-          <button class="wy-btn" onclick="execWysiwyg('bold')" title="Negrita"><b>B</b></button>
-          <button class="wy-btn" onclick="execWysiwyg('italic')" title="Cursiva"><i>I</i></button>
-          <button class="wy-btn" onclick="execWysiwyg('underline')" title="Subrayado"><u>U</u></button>
-          
+          <button class="wy-btn" onclick="execWysiwyg('bold')"><b>B</b></button>
+          <button class="wy-btn" onclick="execWysiwyg('italic')"><i>I</i></button>
+          <button class="wy-btn" onclick="execWysiwyg('underline')"><u>U</u></button>
           <select class="wy-select" onchange="execWysiwygArgs('formatBlock', this.value); this.selectedIndex=0;">
-            <option value="" disabled selected>Encabezado</option>
-            <option value="<h1>">Título H1</option>
-            <option value="<h2>">Título H2</option>
-            <option value="<h3>">Título H3</option>
-            <option value="<p>">Párrafo Normal</option>
+            <option value="" disabled selected>Formato</option>
+            <option value="<h1>">Título 1</option>
+            <option value="<h2>">Título 2</option>
+            <option value="<p>">Párrafo</option>
           </select>
-          
-          <input type="color" style="width: 28px; height: 24px; border: none; background: transparent; cursor: pointer;" title="Color del Texto" onchange="execWysiwygArgs('foreColor', this.value)">
-          <button class="wy-btn" onclick="execWysiwyg('justifyLeft')">⬅</button>
-          <button class="wy-btn" onclick="execWysiwyg('justifyCenter')">↔</button>
-          <button class="wy-btn" onclick="execWysiwyg('justifyRight')">➡</button>
-
+          <input type="color" style="width: 28px; height: 24px; border: none; background: transparent; cursor: pointer; flex-shrink: 0;" onchange="execWysiwygArgs('foreColor', this.value)">
           <div class="wy-divider"></div>
-
           <span class="wy-label">Imagen:</span>
-          <button class="wy-btn" onclick="insertImagePrompt()" title="Insertar Imagen vía URL">🖼️ URL</button>
-          <button class="wy-btn" onclick="triggerImageUpload()" title="Subir Imagen Local">📁 Subir</button>
-          <button class="wy-btn" onclick="resizeSelectedImage('50%')" title="Ancho 50%">50%</button>
-          <button class="wy-btn" onclick="resizeSelectedImage('100%')" title="Ancho 100%">100%</button>
-          <button class="wy-btn" onclick="promptImageSize()" title="Tamaño Personalizado">⚙️ px</button>
+          <button class="wy-btn" onclick="insertImagePrompt()">🖼️ URL</button>
+          <button class="wy-btn" onclick="triggerImageUpload()">📁 Subir</button>
+          <button class="wy-btn" onclick="resizeSelectedImage('50%')">50%</button>
+          <button class="wy-btn" onclick="resizeSelectedImage('100%')">100%</button>
         </div>
         <iframe id="preview-output"></iframe>
       </div>
     </div>
   </div>
 
-  <!-- BARRA DE ACCIONES INFERIOR -->
   <div class="action-bar">
     <button class="btn btn-copy" onclick="copyCode()">📋 COPIAR</button>
     <button class="btn btn-paste" onclick="pasteCode()">📌 PEGAR</button>
     <button class="btn btn-clear" onclick="clearCode()">&#128465; BORRAR</button>
     <button class="btn btn-load" onclick="triggerFileSelect()">📂 CARGAR</button>
-    <button class="btn btn-format" onclick="formatManualCode()">✨ FORMATO</button>
-    
-    <div class="dropdown-container">
+    <button class="btn btn-format" onclick="formatManualCode()">✨ FORMAT</button>
+
+    <div class="dropdown-container" id="download-dropdown-container">
       <button class="btn btn-primary" onclick="toggleDownloadMenu()">
-        &#128190; DESCARGAR &#9662;
+        &#128190; BAJAR &#9662;
       </button>
       <div id="download-menu" class="dropdown-menu">
-        <button class="dropdown-item" onclick="downloadAs('html')">
-          <span>Archivo Web</span> <strong>.HTML</strong>
-        </button>
-        <button class="dropdown-item" onclick="downloadAs('txt')">
-          <span>Texto Plano</span> <strong>.TXT</strong>
-        </button>
-        <!-- Nuevo botón para PDF integrado -->
-        <button class="dropdown-item" onclick="downloadPDF()">
-          <span>Documento PDF</span> <strong>.PDF</strong>
-        </button>
+        <button class="dropdown-item" onclick="downloadAs('html')"><span>Web</span> <strong>.HTML</strong></button>
+        <button class="dropdown-item" onclick="downloadPDF()"><span>Doc PDF</span> <strong>.PDF</strong></button>
       </div>
     </div>
   </div>
@@ -515,8 +429,11 @@
     const statusTag = document.getElementById('status-tag');
     const fileInput = document.getElementById('file-input');
     const imgInput = document.getElementById('img-input');
+    
     const STORAGE_KEY = 'html_app_code';
     const MODE_KEY = 'html_app_mode';
+    const SKIN_KEY = 'html_app_skin';
+    const TERM_COLOR_KEY = 'html_app_term_color';
 
     const initialTemplate = `<!DOCTYPE html>
 <html lang="es">
@@ -524,29 +441,16 @@
   <meta charset="UTF-8">
   <title>Meow HTML App Document</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 30px;
-      background-color: #f4f7f6;
-      color: #333;
-    }
-    .box {
-      background: white;
-      padding: 25px;
-      border-radius: 8px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      border-left: 5px solid #00f3ff;
-    }
-    h1 { color: #121824; margin-bottom: 10px; }
-    p { line-height: 1.6; font-size: 1.1rem; }
-    img { max-width: 100%; height: auto; border-radius: 6px; margin: 10px 0; display: block; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
+    .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-left: 5px solid #00f3ff; }
+    h1 { color: #121824; margin-bottom: 10px; font-size: 1.5rem; }
+    p { line-height: 1.6; font-size: 1rem; }
   </style>
 </head>
 <body>
   <div class="box">
-    <h1>Meow HTML App - Editor Interactivo</h1>
-    <p>Haz clic directamente aquí en la vista previa para <b>escribir o modificar texto</b>. Puedes cambiar el tipo de fuente, tamaño o formato desde la barra superior.</p>
-    <img src="https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&auto=format&fit=crop" alt="Cat" width="300">
+    <h1>Meow HTML App</h1>
+    <p>Haz clic aquí para editar el texto de forma visual.</p>
   </div>
 </body>
 </html>`;
@@ -554,71 +458,46 @@
     const savedCode = localStorage.getItem(STORAGE_KEY) || initialTemplate;
     let selectedImageElement = null;
 
-    // Inicialización del Editor CodeMirror
     const editor = CodeMirror.fromTextArea(document.getElementById('code-input'), {
-      mode: 'htmlmixed',
-      theme: 'abbott',
-      lineNumbers: true,
-      lineWrapping: true,
-      tabSize: 2
+      mode: 'htmlmixed', theme: 'abbott', lineNumbers: true, lineWrapping: true, tabSize: 2
     });
 
     editor.setValue(savedCode);
-
     let isInternalSync = false;
     let liveDebounceTimer;
 
-    // Evento de cambio en el código fuente
     editor.on('change', () => {
       if (isInternalSync) return;
-      
-      statusTag.textContent = 'EDITANDO...';
-      statusTag.style.color = 'var(--neon-yellow)';
-
+      statusTag.textContent = 'EDITANDO...'; statusTag.style.color = 'var(--neon-yellow)';
       clearTimeout(liveDebounceTimer);
       liveDebounceTimer = setTimeout(() => {
         updatePreview(false);
         localStorage.setItem(STORAGE_KEY, editor.getValue());
-        statusTag.textContent = 'LISTO';
-        statusTag.style.color = 'var(--neon-green)';
+        statusTag.textContent = 'LISTO'; statusTag.style.color = 'var(--neon-green)';
       }, 400);
     });
 
-    // Actualiza el iframe desde el código
     function updatePreview(forceManual = false) {
       const code = editor.getValue();
       const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
-
       if (!iframeDoc) return;
-
-      iframeDoc.open();
-      iframeDoc.write(code);
-      iframeDoc.close();
-
-      // Habilitar edición directa y manejo de imágenes dentro del iframe
+      iframeDoc.open(); iframeDoc.write(code); iframeDoc.close();
       setTimeout(() => {
         try {
           if (iframeDoc.body) {
             iframeDoc.body.contentEditable = "true";
-            
             iframeDoc.body.oninput = () => syncVisualToCode(iframeDoc);
             iframeDoc.body.onkeyup = () => syncVisualToCode(iframeDoc);
-
-            // Listener para selección e interactividad con imágenes
             iframeDoc.addEventListener('click', (e) => {
               if (e.target && e.target.tagName === 'IMG') {
-                selectedImageElement = e.target;
-                highlightImage(selectedImageElement, iframeDoc);
+                selectedImageElement = e.target; highlightImage(selectedImageElement, iframeDoc);
               } else {
                 clearImageHighlight(iframeDoc);
               }
             });
           }
-        } catch (e) {
-          console.error("Error activando modo visual:", e);
-        }
+        } catch (e) { console.error(e); }
       }, 200);
-
       if (forceManual) {
         statusTag.textContent = 'EJECUTADO';
         setTimeout(() => { statusTag.textContent = 'LISTO'; }, 1200);
@@ -627,128 +506,69 @@
 
     function highlightImage(img, iframeDoc) {
       clearImageHighlight(iframeDoc);
-      img.style.outline = "3px solid #00f3ff";
-      img.style.cursor = "pointer";
+      img.style.outline = "3px solid #00f3ff"; img.style.cursor = "pointer";
     }
 
     function clearImageHighlight(iframeDoc) {
-      const imgs = iframeDoc.querySelectorAll('img');
-      imgs.forEach(i => i.style.outline = "none");
+      iframeDoc.querySelectorAll('img').forEach(i => i.style.outline = "none");
     }
 
-    // Sincroniza desde la vista previa visual hacia el Editor
     function syncVisualToCode(iframeDoc) {
       isInternalSync = true;
-      
       const clone = iframeDoc.documentElement.cloneNode(true);
-      
       clone.removeAttribute('contenteditable');
-      if (clone.querySelector('body')) {
-        clone.querySelector('body').removeAttribute('contenteditable');
-      }
-
-      // Limpiar estilos de resaltado temporal de las imágenes
-      const cloneImgs = clone.querySelectorAll('img');
-      cloneImgs.forEach(img => {
-        img.style.outline = '';
-        img.style.cursor = '';
+      if (clone.querySelector('body')) clone.querySelector('body').removeAttribute('contenteditable');
+      clone.querySelectorAll('img').forEach(img => {
+        img.style.outline = ''; img.style.cursor = '';
         if (!img.getAttribute('style')) img.removeAttribute('style');
       });
-
       let updatedHTML = '<!DOCTYPE html>\n' + clone.outerHTML;
-
-      if (typeof html_beautify === 'function') {
-        updatedHTML = html_beautify(updatedHTML, { indent_size: 2, wrap_line_length: 0 });
-      }
-
+      if (typeof html_beautify === 'function') updatedHTML = html_beautify(updatedHTML, { indent_size: 2, wrap_line_length: 0 });
       const scrollInfo = editor.getScrollInfo();
       editor.setValue(updatedHTML);
       editor.scrollTo(scrollInfo.left, scrollInfo.top);
-
       localStorage.setItem(STORAGE_KEY, updatedHTML);
-
-      statusTag.textContent = 'VISUAL ➡ CODE';
-      statusTag.style.color = 'var(--neon-cyan)';
-      
-      setTimeout(() => {
-        isInternalSync = false;
-        statusTag.textContent = 'LISTO';
-        statusTag.style.color = 'var(--neon-green)';
-      }, 300);
+      statusTag.textContent = 'SYNC VISUAL'; statusTag.style.color = 'var(--neon-cyan)';
+      setTimeout(() => { isInternalSync = false; statusTag.textContent = 'LISTO'; statusTag.style.color = 'var(--neon-green)'; }, 300);
     }
 
-    // Comandos de formateo WYSIWYG
     function execWysiwyg(command) {
-      const iframeWin = previewOutput.contentWindow;
-      iframeWin.focus();
-      iframeWin.document.execCommand(command, false, null);
-      syncVisualToCode(iframeWin.document);
+      previewOutput.contentWindow.focus();
+      previewOutput.contentWindow.document.execCommand(command, false, null);
+      syncVisualToCode(previewOutput.contentWindow.document);
     }
 
     function execWysiwygArgs(command, value) {
-      const iframeWin = previewOutput.contentWindow;
-      iframeWin.focus();
-      iframeWin.document.execCommand(command, false, value);
-      syncVisualToCode(iframeWin.document);
+      previewOutput.contentWindow.focus();
+      previewOutput.contentWindow.document.execCommand(command, false, value);
+      syncVisualToCode(previewOutput.contentWindow.document);
     }
 
-    // HERRAMIENTAS DE EDICIÓN DE IMÁGENES
     function insertImagePrompt() {
       const url = prompt('Introduce la URL de la imagen:');
-      if (url) {
-        execWysiwygArgs('insertImage', url);
-      }
+      if (url) execWysiwygArgs('insertImage', url);
     }
 
-    function triggerImageUpload() {
-      imgInput.click();
-    }
-
+    function triggerImageUpload() { imgInput.click(); }
     function handleImageUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
+      const file = event.target.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
-        execWysiwygArgs('insertImage', e.target.result);
-        imgInput.value = '';
-      };
+      reader.onload = function(e) { execWysiwygArgs('insertImage', e.target.result); imgInput.value = ''; };
       reader.readAsDataURL(file);
     }
 
     function resizeSelectedImage(widthValue) {
       const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
       if (selectedImageElement) {
-        selectedImageElement.style.width = widthValue;
-        selectedImageElement.style.height = 'auto';
+        selectedImageElement.style.width = widthValue; selectedImageElement.style.height = 'auto';
         syncVisualToCode(iframeDoc);
-      } else {
-        alert('Haz clic primero sobre una imagen en la vista previa para seleccionarla.');
-      }
+      } else { alert('Haz clic sobre una imagen en la vista visual primero.'); }
     }
 
-    function promptImageSize() {
-      const iframeDoc = previewOutput.contentDocument || previewOutput.contentWindow.document;
-      if (selectedImageElement) {
-        const currentW = selectedImageElement.offsetWidth || 300;
-        const newWidth = prompt('Introduce el ancho en píxeles (ej: 250) o porcentaje (ej: 80%):', currentW);
-        if (newWidth) {
-          const formattedWidth = isNaN(newWidth) ? newWidth : `${newWidth}px`;
-          selectedImageElement.style.width = formattedWidth;
-          selectedImageElement.style.height = 'auto';
-          syncVisualToCode(iframeDoc);
-        }
-      } else {
-        alert('Haz clic primero sobre una imagen en la vista previa para seleccionarla.');
-      }
-    }
-
-    // Cambio de vista Móvil / Escritorio
     function setDeviceMode(mode) {
       document.body.classList.remove('mode-mobile', 'mode-desktop');
       document.getElementById('btn-mode-mobile').classList.remove('active');
       document.getElementById('btn-mode-desktop').classList.remove('active');
-
       if (mode === 'mobile') {
         document.body.classList.add('mode-mobile');
         document.getElementById('btn-mode-mobile').classList.add('active');
@@ -757,7 +577,6 @@
         document.body.classList.add('mode-desktop');
         document.getElementById('btn-mode-desktop').classList.add('active');
       }
-
       localStorage.setItem(MODE_KEY, mode);
       setTimeout(() => editor.refresh(), 100);
     }
@@ -765,7 +584,6 @@
     function switchTab(tabName) {
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
-
       if (tabName === 'editor') {
         document.querySelectorAll('.tab-btn')[0].classList.add('active');
         document.getElementById('panel-editor').classList.add('active');
@@ -777,85 +595,77 @@
       }
     }
 
-    // Funciones de la barra de acciones
-    function copyCode() {
-      const code = editor.getValue();
-      if (!code) return;
+    function toggleSettingsMenu() {
+      document.getElementById('settings-menu').classList.toggle('show');
+    }
 
+    function changeSkin(skinType) {
+      document.body.classList.remove('skin-classic', 'skin-terminal');
+      document.body.classList.add(`skin-${skinType}`);
+      localStorage.setItem(SKIN_KEY, skinType);
+      document.getElementById('settings-menu').classList.remove('show');
+    }
+
+    function changeTermColor(colorName) {
+      document.body.classList.remove(
+        'term-theme-green', 'term-theme-amber', 'term-theme-cyan', 
+        'term-theme-dracula', 'term-theme-mono', 'term-theme-cappuccino'
+      );
+      document.body.classList.add(`term-theme-${colorName}`);
+      localStorage.setItem(TERM_COLOR_KEY, colorName);
+      document.getElementById('settings-menu').classList.remove('show');
+    }
+
+    function copyCode() {
+      const code = editor.getValue(); if (!code) return;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(code).then(() => notify('COPIADO')).catch(() => fallbackCopy(code));
-      } else {
-        fallbackCopy(code);
-      }
+      } else { fallbackCopy(code); }
     }
 
     function fallbackCopy(text) {
-      const area = document.createElement('textarea');
-      area.value = text;
-      document.body.appendChild(area);
-      area.select();
-      document.execCommand('copy');
-      document.body.removeChild(area);
-      notify('COPIADO');
+      const area = document.createElement('textarea'); area.value = text;
+      document.body.appendChild(area); area.select(); document.execCommand('copy');
+      document.body.removeChild(area); notify('COPIADO');
     }
 
     function pasteCode() {
       if (navigator.clipboard && navigator.clipboard.readText) {
         navigator.clipboard.readText().then(text => {
-          if (text) {
-            editor.setValue(text);
-            updatePreview();
-            notify('PEGADO');
-          }
+          if (text) { editor.setValue(text); updatePreview(); notify('PEGADO'); }
         }).catch(() => fallbackPaste());
-      } else {
-        fallbackPaste();
-      }
+      } else { fallbackPaste(); }
     }
 
     function fallbackPaste() {
       const text = prompt('Pega tu código aquí:');
-      if (text !== null) {
-        editor.setValue(text);
-        updatePreview();
-        notify('PEGADO');
-      }
+      if (text !== null) { editor.setValue(text); updatePreview(); notify('PEGADO'); }
     }
 
     function clearCode() {
-      if (confirm('¿Deseas borrar todo el código?')) {
-        editor.setValue('');
-        localStorage.removeItem(STORAGE_KEY);
-        updatePreview();
-        notify('BORRADO');
+      if (confirm('¿Borrar todo el código?')) {
+        editor.setValue(''); localStorage.removeItem(STORAGE_KEY); updatePreview(); notify('BORRADO');
       }
     }
 
     function triggerFileSelect() { fileInput.click(); }
-
     function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
+      const file = event.target.files[0]; if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
-        editor.setValue(e.target.result);
-        updatePreview();
-        notify('CARGADO');
-      };
-      reader.readAsText(file, 'UTF-8');
-      fileInput.value = '';
+      reader.onload = function(e) { editor.setValue(e.target.result); updatePreview(); notify('CARGADO'); };
+      reader.readAsText(file, 'UTF-8'); fileInput.value = '';
     }
 
-    function toggleDownloadMenu() {
-      document.getElementById('download-menu').classList.toggle('show');
-    }
+    function toggleDownloadMenu() { document.getElementById('download-menu').classList.toggle('show'); }
 
     document.addEventListener('click', (e) => {
-      const container = document.querySelector('.dropdown-container');
-      if (container && !container.contains(e.target)) {
-        document.getElementById('download-menu').classList.remove('show');
-      }
+      const dlContainer = document.getElementById('download-dropdown-container');
+      const dlMenu = document.getElementById('download-menu');
+      if (dlContainer && dlMenu && !dlContainer.contains(e.target)) dlMenu.classList.remove('show');
+      
+      const settingsContainer = document.getElementById('settings-dropdown-container');
+      const settingsMenu = document.getElementById('settings-menu');
+      if (settingsContainer && settingsMenu && !settingsContainer.contains(e.target)) settingsMenu.classList.remove('show');
     });
 
     function downloadAs(format) {
@@ -864,83 +674,43 @@
       const mime = format === 'html' ? 'text/html;charset=utf-8' : 'text/plain;charset=utf-8';
       const blob = new Blob(['\uFEFF' + code], { type: mime });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `codigo.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const a = document.createElement('a'); a.href = url; a.download = `codigo.${format}`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
     }
 
     function notify(text) {
-      statusTag.textContent = text;
-      statusTag.style.color = 'var(--neon-cyan)';
-      setTimeout(() => {
-        statusTag.textContent = 'LISTO';
-        statusTag.style.color = 'var(--neon-green)';
-      }, 1500);
+      statusTag.textContent = text; statusTag.style.color = 'var(--neon-cyan)';
+      setTimeout(() => { statusTag.textContent = 'LISTO'; statusTag.style.color = 'var(--neon-green)'; }, 1500);
     }
-// --- NUEVA FUNCIÓN PARA FORMATEAR MANUALMENTE EL CÓDIGO ---
+
     function formatManualCode() {
       const currentCode = editor.getValue();
-      if (!currentCode.trim()) {
-        notify('VACÍO');
-        return;
-      }
-
-      // Verificamos que la librería js-beautify esté disponible
+      if (!currentCode.trim()) { notify('VACÍO'); return; }
       if (typeof html_beautify === 'function') {
-        const formattedCode = html_beautify(currentCode, { 
-          indent_size: 2, 
-          wrap_line_length: 0,
-          preserve_newlines: true
-        });
-
-        // Actualizamos CodeMirror con el código ordenado
-        editor.setValue(formattedCode);
-        updatePreview();
-        notify('FORMATEADO');
-      } else {
-        console.error("La librería js-beautify no está cargada.");
-        notify('ERROR FORMATO');
-      }
+        const formattedCode = html_beautify(currentCode, { indent_size: 2, wrap_line_length: 0 });
+        editor.setValue(formattedCode); updatePreview(); notify('FORMATEADO');
+      } else { notify('ERROR'); }
     }
-    
-    // --- NUEVA FUNCIÓN PARA PDF INTEGRADA ---
+
     function downloadPDF() {
-      // Ocultamos el menú desplegable
-      document.getElementById('download-menu').classList.remove('show');
-      
-      // Mostramos el estado en la etiqueta superior
-      notify('GENERANDO PDF...');
-
-      // Tomamos el código en texto crudo directo de CodeMirror
+      document.getElementById('download-menu').classList.remove('show'); notify('CREANDO PDF...');
       const codigoHTML = editor.getValue();
-
-      // Configuramos el PDF
       const opt = {
-        margin:       15,
-        filename:     'documento_app.pdf',
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true }, 
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        margin: 15, filename: 'documento_app.pdf', image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
       };
-
-      // Le pasamos el texto directamente a html2pdf
-      html2pdf().set(opt).from(codigoHTML).save().then(() => {
-        // Si todo sale bien, avisamos que está listo
-        notify('PDF LISTO');
-      }).catch(error => {
-        // Si algo falla, lo mostramos en la etiqueta de estado
-        console.error("Error al crear el PDF:", error);
-        notify('ERROR PDF');
-      });
+      html2pdf().set(opt).from(codigoHTML).save().then(() => notify('PDF LISTO')).catch(() => notify('ERROR PDF'));
     }
 
-    // Inicialización
     const savedMode = localStorage.getItem(MODE_KEY) || (window.innerWidth < 768 ? 'mobile' : 'desktop');
     setDeviceMode(savedMode);
+    
+    const savedSkin = localStorage.getItem(SKIN_KEY) || 'classic';
+    changeSkin(savedSkin);
+
+    const savedTermColor = localStorage.getItem(TERM_COLOR_KEY) || 'green';
+    changeTermColor(savedTermColor);
+    
     updatePreview();
   </script>
 </body>
