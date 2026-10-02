@@ -179,9 +179,9 @@
       flex-wrap: wrap;
       align-items: center;
       gap: 5px; 
-      z-index: 100; /* Z-index elevado para garantizar visibilidad */
+      z-index: 100;
       flex-shrink: 0;
-      overflow: visible; /* Cambiado a visible para permitir que floten los menús correctamente */
+      overflow: visible;
       padding-bottom: env(safe-area-inset-bottom, 8px);
     }
     
@@ -207,7 +207,7 @@
     .btn-format { background: rgba(180, 0, 255, 0.12); border: 1px solid #b000ff; color: #d166ff; }
     .btn-primary { background: linear-gradient(135deg, var(--neon-cyan), #0088ff); color: #000; font-weight: 900; }
     
-    /* ESTILOS DE DROPDOWNS CORREGIDOS PARA DESPLEGARSE HACIA ARRIBA */
+    /* ESTILOS DE DROPDOWNS */
     .dropdown-container { position: relative; display: flex; flex: 1 1 15%; min-width: 60px; align-items: center; }
     .dropdown-container.settings-container { flex: none; min-width: auto; }
 
@@ -215,13 +215,12 @@
       display: none; position: absolute; background: #0d121d; border: 1px solid var(--neon-cyan);
       box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); border-radius: 4px; overflow: hidden;
       flex-direction: column; z-index: 99999;
-      min-width: 150px;
+      min-width: 170px;
     }
     .dropdown-menu.show { display: flex; }
     
-    /* CORRECCIÓN: Menú de descarga se despliega hacia arriba con absolute bottom */
     #download-menu { bottom: calc(100% + 8px); right: 0; left: auto; top: auto; }
-    #settings-menu { top: 115%; right: 0; left: auto; max-height: 70vh; overflow-y: auto; }
+    #settings-menu { top: 115%; right: 0; left: auto; max-height: 75vh; overflow-y: auto; }
 
     .dropdown-section-title {
       font-size: 0.65rem; color: #aaa; padding: 6px 10px; background: rgba(0,0,0,0.5);
@@ -342,7 +341,7 @@
       <div id="status-tag" class="status-tag">LISTO</div>
     </div>
 
-    <!-- Orden de derecha a izquierda: Menú (3 líneas), Modo Computadora, Modo Móvil -->
+    <!-- Controles de la derecha -->
     <div class="header-controls">
       <button id="btn-mode-mobile" class="icon-mode-btn" title="Modo Móvil" onclick="setDeviceMode('mobile')">📱</button>
       <button id="btn-mode-desktop" class="icon-mode-btn" title="Modo Escritorio" onclick="setDeviceMode('desktop')">🖥️</button>
@@ -352,6 +351,14 @@
           &#9776;
         </button>
         <div id="settings-menu" class="dropdown-menu">
+          
+          <!-- SECCIÓN: INSERTAR CÓDIGO ADICIONAL (BASADO EN TU IMAGEN) -->
+          <div class="dropdown-section-title">Insertar Código</div>
+          <button class="dropdown-item" onclick="insertSnippet('html')"><span>📁 / HTML</span> <strong>&lt;...&gt;</strong></button>
+          <button class="dropdown-item" onclick="insertSnippet('css')"><span>🎨 * CSS</span> <strong>&lt;style&gt;</strong></button>
+          <button class="dropdown-item" onclick="insertSnippet('js')"><span>⚡ () JS</span> <strong>&lt;script&gt;</strong></button>
+
+          <!-- SECCIÓN: TEMA VISUAL -->
           <div class="dropdown-section-title">Tema Visual</div>
           <button class="dropdown-item" onclick="changeSkin('classic')"><span>🎨 HTML Classic</span></button>
           <button class="dropdown-item" onclick="changeSkin('terminal')"><span>📟 Terminal GUI</span></button>
@@ -615,6 +622,23 @@
 
     function toggleSettingsMenu() {
       document.getElementById('settings-menu').classList.toggle('show');
+    }
+
+    // NUEVA FUNCIÓN: Insertar plantillas de código adicionales en el cursor o al final
+    function insertSnippet(type) {
+      document.getElementById('settings-menu').classList.remove('show');
+      let snippet = "";
+      if (type === 'html') {
+        snippet = '\n<div class="nueva-seccion">\n  <h2>Título de Sección</h2>\n  <p>Escribe tu contenido HTML aquí...</p>\n</div>\n';
+      } else if (type === 'css') {
+        snippet = '\n<style>\n  .nueva-seccion {\n    background: #eef2f7;\n    padding: 15px;\n    margin-top: 15px;\n    border-radius: 6px;\n    border-left: 4px solid #00f3ff;\n  }\n</style>\n';
+      } else if (type === 'js') {
+        snippet = '\n<script>\n  console.log("¡Código JS ejecutado correctamente!");\n<\/script>\n';
+      }
+      
+      editor.replaceSelection(snippet);
+      updatePreview(true);
+      notify('INERTADO');
     }
 
     function changeSkin(skinType) {
