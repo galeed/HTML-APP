@@ -65,7 +65,7 @@
       position: absolute; top: -9999px; opacity: 0; z-index: -10;
     }
     
-    /* HEADER (CORREGIDO PARA QUE NO SE MUEVA Y PERMITA MENÚS DESPLEGABLES) */
+    /* HEADER */
     header {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border-glow);
@@ -73,9 +73,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      z-index: 50; /* Z-index alto para que el menú no quede oculto */
+      z-index: 50;
       flex-shrink: 0;
-      /* Se eliminó overflow-x: auto para que no se mueva horizontalmente */
       overflow: visible;
       gap: 10px;
     }
@@ -84,7 +83,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      flex-wrap: wrap; /* Permite ajuste en pantallas muy pequeñas sin scroll */
+      flex-wrap: wrap;
     }
     
     .brand {
@@ -122,7 +121,6 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      /* Orden invertido visualmente en HTML para reflejar tu petición */
     }
     
     .icon-mode-btn {
@@ -174,33 +172,55 @@
     
     /* BARRA DE ACCIONES INFERIOR */
     .action-bar {
-      padding: 8px 10px; background: var(--bg-panel); border-top: 1px solid var(--border-glow);
-      display: flex; gap: 6px; z-index: 10; flex-shrink: 0; overflow-x: auto; scrollbar-width: none;
+      padding: 8px 10px; 
+      background: var(--bg-panel); 
+      border-top: 1px solid var(--border-glow);
+      display: flex; 
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px; 
+      z-index: 100; /* Z-index elevado para garantizar visibilidad */
+      flex-shrink: 0;
+      overflow: visible; /* Cambiado a visible para permitir que floten los menús correctamente */
       padding-bottom: env(safe-area-inset-bottom, 8px);
     }
-    .action-bar::-webkit-scrollbar { display: none; }
     
-    .btn { flex: 1; min-width: 80px; padding: 10px 2px; border: none; border-radius: 4px; font-weight: 800; font-size: 0.68rem; text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+    .btn { 
+      flex: 1 1 15%; 
+      min-width: 60px; 
+      padding: 8px 2px; 
+      border: none; 
+      border-radius: 4px; 
+      font-weight: 800; 
+      font-size: 0.62rem; 
+      text-transform: uppercase; 
+      cursor: pointer; 
+      white-space: nowrap; 
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
     .btn-copy { background: rgba(0, 243, 255, 0.12); border: 1px solid var(--neon-cyan); color: var(--neon-cyan); }
     .btn-paste { background: rgba(255, 204, 0, 0.12); border: 1px solid var(--neon-yellow); color: var(--neon-yellow); }
     .btn-clear { background: rgba(255, 0, 85, 0.12); border: 1px solid var(--neon-magenta); color: var(--neon-magenta); }
     .btn-load { background: rgba(0, 255, 102, 0.12); border: 1px solid var(--neon-green); color: var(--neon-green); }
-    .btn-format {background: rgba(180, 0, 255, 0.12); border: 1px solid #b000ff;color: #d166ff; }
+    .btn-format { background: rgba(180, 0, 255, 0.12); border: 1px solid #b000ff; color: #d166ff; }
     .btn-primary { background: linear-gradient(135deg, var(--neon-cyan), #0088ff); color: #000; font-weight: 900; }
     
-    /* ESTILOS DE DROPDOWNS CORREGIDOS */
-    .dropdown-container { position: relative; display: flex; flex: 1; min-width: 100px; align-items: center; }
+    /* ESTILOS DE DROPDOWNS CORREGIDOS PARA DESPLEGARSE HACIA ARRIBA */
+    .dropdown-container { position: relative; display: flex; flex: 1 1 15%; min-width: 60px; align-items: center; }
     .dropdown-container.settings-container { flex: none; min-width: auto; }
 
     .dropdown-menu {
       display: none; position: absolute; background: #0d121d; border: 1px solid var(--neon-cyan);
       box-shadow: 0 0 15px rgba(0, 243, 255, 0.3); border-radius: 4px; overflow: hidden;
-      flex-direction: column; z-index: 9999; /* Alto z-index para sobreponerse al editor */
+      flex-direction: column; z-index: 99999;
       min-width: 150px;
     }
     .dropdown-menu.show { display: flex; }
     
-    #download-menu { bottom: 115%; right: 0; left: 0; }
+    /* CORRECCIÓN: Menú de descarga se despliega hacia arriba con absolute bottom */
+    #download-menu { bottom: calc(100% + 8px); right: 0; left: auto; top: auto; }
     #settings-menu { top: 115%; right: 0; left: auto; max-height: 70vh; overflow-y: auto; }
 
     .dropdown-section-title {
@@ -233,7 +253,7 @@
       body:not(.mode-mobile) .panel:first-child { border-right: 1px solid var(--border-glow); }
     }
 
-    /* --- HTML CLASSIC: INTEGRACIÓN CYBERPUNK Y GLASSMORFISMO --- */
+    /* --- HTML CLASSIC --- */
     body.skin-classic .brand-title, body.skin-classic .btn-run, body.skin-classic .status-tag, 
     body.skin-classic .tab-btn, body.skin-classic .wy-label, body.skin-classic .btn, 
     body.skin-classic .dropdown-item strong, body.skin-classic .dropdown-section-title {
@@ -261,7 +281,6 @@
     body.term-theme-mono { --term-color: #ffffff; --term-color-dim: #888888; }
     body.term-theme-cappuccino { --term-color: #d4b693; --term-color-dim: #8c7355; }
     
-    /* Mostrar sección de colores de terminal solo en skin terminal */
     #term-colors-section { display: none; }
     body.skin-terminal #term-colors-section { display: block; }
 
@@ -323,21 +342,20 @@
       <div id="status-tag" class="status-tag">LISTO</div>
     </div>
 
-    <!-- Controles derechos: Móvil, Desktop, Menú (3 líneas) de derecha a izquierda -->
+    <!-- Orden de derecha a izquierda: Menú (3 líneas), Modo Computadora, Modo Móvil -->
     <div class="header-controls">
       <button id="btn-mode-mobile" class="icon-mode-btn" title="Modo Móvil" onclick="setDeviceMode('mobile')">📱</button>
       <button id="btn-mode-desktop" class="icon-mode-btn" title="Modo Escritorio" onclick="setDeviceMode('desktop')">🖥️</button>
       
       <div class="dropdown-container settings-container" id="settings-dropdown-container">
         <button class="icon-mode-btn menu-btn" onclick="toggleSettingsMenu()" title="Configuración">
-          &#9776; <!-- Emoji 3 lineas (hamburguesa) -->
+          &#9776;
         </button>
         <div id="settings-menu" class="dropdown-menu">
           <div class="dropdown-section-title">Tema Visual</div>
           <button class="dropdown-item" onclick="changeSkin('classic')"><span>🎨 HTML Classic</span></button>
           <button class="dropdown-item" onclick="changeSkin('terminal')"><span>📟 Terminal GUI</span></button>
           
-          <!-- Submenú de colores, se muestra solo en modo terminal -->
           <div id="term-colors-section">
             <div class="dropdown-section-title">Color Terminal</div>
             <button class="dropdown-item" onclick="changeTermColor('green')"><span>🟢 Phosphor Green</span></button>
@@ -414,7 +432,7 @@
     <button class="btn btn-format" onclick="formatManualCode()">✨ FORMAT</button>
 
     <div class="dropdown-container" id="download-dropdown-container">
-      <button class="btn btn-primary" onclick="toggleDownloadMenu()">
+      <button class="btn btn-primary" onclick="toggleDownloadMenu()" style="width: 100%;">
         &#128190; BAJAR &#9662;
       </button>
       <div id="download-menu" class="dropdown-menu">
